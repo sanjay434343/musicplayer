@@ -61,6 +61,31 @@
       cursor: not-allowed;
     }
     
+    .language-dropdown {
+      position: relative;
+    }
+    
+    .language-select {
+      background: #242424;
+      border: 1px solid #404040;
+      border-radius: 20px;
+      padding: 8px 16px;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 120px;
+      transition: background 0.2s;
+    }
+    
+    .language-select:hover {
+      background: #2a2a2a;
+    }
+    
+    .language-select:focus {
+      outline: none;
+      border-color: #1db954;
+    }
+    
     .search-bar {
       flex: 1;
       max-width: 400px;
@@ -153,6 +178,9 @@
     
     .playlist-header {
       margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
     
     .playlist-title {
@@ -161,9 +189,56 @@
       margin-bottom: 8px;
     }
     
+    .playlist-info {
+      flex: 1;
+    }
+    
     .playlist-meta {
       color: #b3b3b3;
       font-size: 14px;
+    }
+    
+    .playlist-actions {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    
+    .play-all-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #1db954;
+      border: none;
+      color: #000000;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, background 0.2s;
+    }
+    
+    .play-all-btn:hover {
+      transform: scale(1.04);
+      background: #1ed760;
+    }
+    
+    .shuffle-btn {
+      background: none;
+      border: 2px solid #b3b3b3;
+      border-radius: 24px;
+      padding: 8px 16px;
+      color: #b3b3b3;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .shuffle-btn:hover {
+      border-color: #ffffff;
+      color: #ffffff;
     }
     
     /* Songs Table */
@@ -204,6 +279,10 @@
       background: #1a1a1a;
     }
     
+    .song-row.playing .song-name {
+      color: #1db954;
+    }
+    
     .song-index {
       color: #b3b3b3;
       font-size: 14px;
@@ -222,6 +301,7 @@
       display: none;
       color: #ffffff;
       font-size: 16px;
+      text-align: center;
     }
     
     .song-info {
@@ -271,6 +351,35 @@
     .song-duration {
       color: #b3b3b3;
       font-size: 14px;
+    }
+    
+    .load-more-container {
+      display: flex;
+      justify-content: center;
+      margin: 32px 0;
+    }
+    
+    .load-more-btn {
+      background: none;
+      border: 2px solid #b3b3b3;
+      border-radius: 24px;
+      padding: 12px 32px;
+      color: #b3b3b3;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    
+    .load-more-btn:hover {
+      border-color: #ffffff;
+      color: #ffffff;
+      transform: scale(1.02);
+    }
+    
+    .load-more-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     
     /* Bottom Player */
@@ -450,6 +559,22 @@
       align-items: center;
       height: 200px;
       color: #b3b3b3;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid #333;
+      border-top: 3px solid #1db954;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     .error {
@@ -472,6 +597,16 @@
       
       .volume-controls {
         display: none;
+      }
+      
+      .playlist-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      
+      .playlist-title {
+        font-size: 32px;
       }
     }
     
@@ -501,9 +636,25 @@
       <button class="nav-btn" onclick="history.back()" title="Go back">‹</button>
       <button class="nav-btn" onclick="history.forward()" title="Go forward">›</button>
     </div>
+    
+    <div class="language-dropdown">
+      <select class="language-select" id="languageSelect">
+        <option value="tamil">Tamil</option>
+        <option value="hindi">Hindi</option>
+        <option value="telugu">Telugu</option>
+        <option value="malayalam">Malayalam</option>
+        <option value="kannada">Kannada</option>
+        <option value="bengali">Bengali</option>
+        <option value="punjabi">Punjabi</option>
+        <option value="marathi">Marathi</option>
+        <option value="gujarati">Gujarati</option>
+        <option value="english">English</option>
+      </select>
+    </div>
+    
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" class="search-input" id="searchInput" placeholder="What do you want to listen to?" value="tamil">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search for songs, artists, or albums">
     </div>
   </nav>
 
@@ -530,9 +681,15 @@
     <!-- Main View -->
     <div class="main-view" id="mainView">
       <div class="playlist-header">
-        <h1 class="playlist-title">Tamil Songs</h1>
-        <div class="playlist-meta">
-          <span id="songsCount">Loading...</span> songs
+        <div class="playlist-info">
+          <h1 class="playlist-title" id="playlistTitle">Tamil Songs</h1>
+          <div class="playlist-meta">
+            <span id="songsCount">Loading...</span> songs • Made for you
+          </div>
+        </div>
+        <div class="playlist-actions">
+          <button class="play-all-btn" onclick="playAll()" title="Play all">▶</button>
+          <button class="shuffle-btn" onclick="shuffleAll()">Shuffle play</button>
         </div>
       </div>
 
@@ -544,6 +701,10 @@
           <span>⏱</span>
         </div>
         <div id="songsList"></div>
+      </div>
+      
+      <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+        <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreSongs()">Load More Songs</button>
       </div>
     </div>
   </div>
@@ -588,12 +749,18 @@
     const API_URL = "https://jiosavan-api-with-playlist.vercel.app/api/search/songs?query=";
     
     let songs = [];
+    let displayedSongs = [];
     let currentIdx = 0;
     let isPlaying = false;
     let audio = null;
+    let currentLanguage = 'tamil';
+    let songsPerPage = 25;
+    let currentPage = 0;
+    let isLoading = false;
 
     const songsListDiv = document.getElementById("songsList");
     const searchInput = document.getElementById("searchInput");
+    const languageSelect = document.getElementById("languageSelect");
     const bottomPlayer = document.getElementById("bottomPlayer");
     const nowPlayingCover = document.getElementById("nowPlayingCover");
     const nowPlayingName = document.getElementById("nowPlayingName");
@@ -603,43 +770,184 @@
     const totalTime = document.getElementById("totalTime");
     const progressFilled = document.getElementById("progressFilled");
     const songsCount = document.getElementById("songsCount");
+    const playlistTitle = document.getElementById("playlistTitle");
+    const loadMoreContainer = document.getElementById("loadMoreContainer");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
 
-    function fetchSongs(query) {
-      songsListDiv.innerHTML = '<div class="loading">Loading Tamil songs...</div>';
+    // Language change handler
+    languageSelect.addEventListener('change', function() {
+      currentLanguage = this.value;
+      const languageName = this.options[this.selectedIndex].text;
+      playlistTitle.textContent = `${languageName} Songs`;
+      resetAndFetchSongs();
+    });
+
+    // Search handler
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        if (this.value.trim()) {
+          resetAndFetchSongs(this.value.trim());
+        } else {
+          resetAndFetchSongs();
+        }
+      }, 500);
+    });
+
+    function resetAndFetchSongs(query) {
+      songs = [];
+      displayedSongs = [];
+      currentPage = 0;
+      songsListDiv.innerHTML = '';
+      loadMoreContainer.style.display = 'none';
+      fetchSongs(query);
+    }
+
+    function fetchSongs(query, append = false) {
+      if (isLoading) return;
+      isLoading = true;
+
+      if (!append) {
+        songsListDiv.innerHTML = `
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <div>Loading ${currentLanguage} songs...</div>
+          </div>
+        `;
+      } else {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Loading...';
+      }
+
+      const searchQuery = query || getRandomQueries();
       
-      fetch(`${API_URL}${encodeURIComponent(query)}&limit=100`)
+      fetch(`${API_URL}${encodeURIComponent(searchQuery)}&limit=100`)
         .then(res => res.json())
         .then(json => {
-          songs = (json.data.results || []).filter(
-            s => s.language && s.language.toLowerCase() === "tamil"
+          const newSongs = (json.data.results || []).filter(
+            s => s.language && s.language.toLowerCase() === currentLanguage.toLowerCase()
           ) || [];
-          
-          currentIdx = 0;
-          renderSongsList();
-          songsCount.textContent = songs.length;
+
+          if (append) {
+            // Add new unique songs
+            newSongs.forEach(newSong => {
+              const exists = songs.some(existingSong => existingSong.id === newSong.id);
+              if (!exists) {
+                songs.push(newSong);
+              }
+            });
+          } else {
+            songs = newSongs;
+          }
+
+          // If we don't have enough songs, fetch more with different queries
+          if (songs.length < 100 && !query) {
+            fetchMoreFromDifferentSources();
+          } else {
+            displaySongs();
+          }
+
+          isLoading = false;
         })
         .catch(error => {
           console.error('Error fetching songs:', error);
-          songsListDiv.innerHTML = '<div class="error">Failed to load songs. Please try again.</div>';
+          if (!append) {
+            songsListDiv.innerHTML = '<div class="error">Failed to load songs. Please try again.</div>';
+          }
+          isLoading = false;
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Load More Songs';
         });
     }
 
-    function renderSongsList() {
-      if (!songs.length) {
-        songsListDiv.innerHTML = '<div class="loading">No Tamil songs found</div>';
-        return;
+    function fetchMoreFromDifferentSources() {
+      const additionalQueries = getAdditionalQueries();
+      let fetchCount = 0;
+      
+      additionalQueries.forEach((query, index) => {
+        setTimeout(() => {
+          fetch(`${API_URL}${encodeURIComponent(query)}&limit=50`)
+            .then(res => res.json())
+            .then(json => {
+              const newSongs = (json.data.results || []).filter(
+                s => s.language && s.language.toLowerCase() === currentLanguage.toLowerCase()
+              ) || [];
+
+              newSongs.forEach(newSong => {
+                const exists = songs.some(existingSong => existingSong.id === newSong.id);
+                if (!exists) {
+                  songs.push(newSong);
+                }
+              });
+
+              fetchCount++;
+              if (fetchCount === additionalQueries.length) {
+                displaySongs();
+              }
+            })
+            .catch(console.error);
+        }, index * 200); // Stagger requests
+      });
+    }
+
+    function getRandomQueries() {
+      const queries = {
+        tamil: ['tamil hits', 'tamil melody', 'ar rahman tamil', 'tamil classical', 'ilaiyaraaja'],
+        hindi: ['bollywood hits', 'hindi romantic', 'hindi classical', 'arijit singh', 'kishore kumar'],
+        telugu: ['telugu hits', 'telugu melody', 'ss thaman telugu', 'telugu classical', 'spb telugu'],
+        malayalam: ['malayalam hits', 'malayalam melody', 'malayalam classical', 'yesudas malayalam'],
+        kannada: ['kannada hits', 'kannada melody', 'kannada classical', 'spb kannada'],
+        bengali: ['bengali hits', 'rabindra sangeet', 'bengali modern', 'bengali classical'],
+        punjabi: ['punjabi hits', 'punjabi bhangra', 'punjabi romantic', 'gurdas maan'],
+        marathi: ['marathi hits', 'marathi classical', 'marathi folk', 'marathi devotional'],
+        gujarati: ['gujarati hits', 'gujarati folk', 'gujarati bhajan', 'gujarati garba'],
+        english: ['pop hits', 'rock classics', 'english romantic', 'billboard hits']
+      };
+
+      const langQueries = queries[currentLanguage] || queries.tamil;
+      return langQueries[Math.floor(Math.random() * langQueries.length)];
+    }
+
+    function getAdditionalQueries() {
+      const additionalQueries = {
+        tamil: ['vijay songs tamil', 'ajith songs tamil', 'tamil duet songs', 'tamil sad songs'],
+        hindi: ['shah rukh khan songs', 'hindi party songs', 'hindi sad songs', '90s bollywood'],
+        telugu: ['mahesh babu songs', 'prabhas songs', 'telugu item songs', 'telugu devotional'],
+        malayalam: ['mohanlal songs', 'mammootty songs', 'malayalam romantic', 'malayalam folk'],
+        kannada: ['rajkumar songs', 'kannada romantic', 'kannada devotional', 'kannada folk'],
+        bengali: ['bengali romantic', 'bengali devotional', 'adhunik bengali', 'bengali folk'],
+        punjabi: ['diljit dosanjh', 'punjabi sad songs', 'punjabi dance', 'punjabi folk'],
+        marathi: ['marathi romantic', 'marathi qawwali', 'marathi lavani', 'marathi abhang'],
+        gujarati: ['gujarati romantic', 'gujarati devotional', 'gujarati lok geet', 'gujarati thumri'],
+        english: ['english dance', 'english ballads', 'english rock', 'english country']
+      };
+
+      return additionalQueries[currentLanguage] || additionalQueries.tamil;
+    }
+
+    function displaySongs() {
+      const startIndex = currentPage * songsPerPage;
+      const endIndex = Math.min(startIndex + songsPerPage, songs.length);
+      const songsToShow = songs.slice(startIndex, endIndex);
+
+      if (currentPage === 0) {
+        displayedSongs = [...songsToShow];
+        songsListDiv.innerHTML = "";
+      } else {
+        displayedSongs = [...displayedSongs, ...songsToShow];
       }
 
-      songsListDiv.innerHTML = "";
-      songs.forEach((song, idx) => {
+      songsToShow.forEach((song, idx) => {
+        const globalIndex = startIndex + idx;
         const songRow = document.createElement("div");
-        songRow.className = "song-row" + (idx === currentIdx && isPlaying ? " active" : "");
-        songRow.onclick = () => playSong(idx);
+        songRow.className = "song-row" + (globalIndex === currentIdx && isPlaying ? " active playing" : "");
+        songRow.onclick = () => playSong(globalIndex);
         
         songRow.innerHTML = `
-          <div class="song-index">${idx + 1}</div>
+          <div class="song-index">${globalIndex + 1}<span class="play-icon">▶</span></div>
           <div class="song-info">
-            <img class="song-cover-small" src="${getImg(song, '150x150')}" alt="">
+            <img class="song-cover-small" src="${getImg(song, '150x150')}" alt="" onerror="this.style.display='none'">
             <div class="song-details">
               <div class="song-name">${song.name}</div>
               <div class="song-artist">${song.artists.primary.map(a => a.name).join(", ")}</div>
@@ -651,6 +959,32 @@
         
         songsListDiv.appendChild(songRow);
       });
+
+      // Update counts and show/hide load more button
+      songsCount.textContent = displayedSongs.length;
+      
+      if (songs.length > displayedSongs.length) {
+        loadMoreContainer.style.display = 'flex';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More Songs';
+      } else if (songs.length < 100) {
+        loadMoreContainer.style.display = 'flex';
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load More Songs';
+      } else {
+        loadMoreContainer.style.display = 'none';
+      }
+    }
+
+    function loadMoreSongs() {
+      if (displayedSongs.length < songs.length) {
+        // Show more from existing songs
+        currentPage++;
+        displaySongs();
+      } else {
+        // Fetch more songs
+        fetchSongs(null, true);
+      }
     }
 
     function playSong(idx) {
@@ -667,10 +1001,21 @@
       playPauseBtn.innerHTML = '⏸';
       
       // Update songs list
-      renderSongsList();
+      updateActiveSong();
       
       // Setup audio
       setupAudioPlayer(song);
+    }
+
+    function updateActiveSong() {
+      const songRows = document.querySelectorAll('.song-row');
+      songRows.forEach((row, idx) => {
+        if (idx === currentIdx && isPlaying) {
+          row.classList.add('active', 'playing');
+        } else {
+          row.classList.remove('active', 'playing');
+        }
+      });
     }
 
     function setupAudioPlayer(song) {
@@ -711,7 +1056,7 @@
         }
       }
       
-      renderSongsList();
+      updateActiveSong();
     }
 
     function nextSong() {
@@ -724,6 +1069,24 @@
       if (!songs.length) return;
       currentIdx = (currentIdx - 1 + songs.length) % songs.length;
       playSong(currentIdx);
+    }
+
+    function playAll() {
+      if (songs.length > 0) {
+        playSong(0);
+      }
+    }
+
+    function shuffleAll() {
+      if (songs.length > 0) {
+        // Shuffle the songs array
+        const shuffled = [...songs].sort(() => Math.random() - 0.5);
+        songs = shuffled;
+        displayedSongs = [];
+        currentPage = 0;
+        displaySongs();
+        playSong(0);
+      }
     }
 
     function updateProgress() {
@@ -743,12 +1106,10 @@
     }
 
     function shuffle() {
-      // Placeholder for shuffle functionality
       console.log('Shuffle clicked');
     }
 
     function repeat() {
-      // Placeholder for repeat functionality
       console.log('Repeat clicked');
     }
 
@@ -764,13 +1125,6 @@
       return song.image.find(img => img.quality === quality)?.url || song.image[0].url;
     }
 
-    // Search handling
-    searchInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        fetchSongs(searchInput.value.trim() || 'tamil');
-      }
-    });
-
     // Make functions globally available
     window.togglePlay = togglePlay;
     window.nextSong = nextSong;
@@ -778,9 +1132,12 @@
     window.shuffle = shuffle;
     window.repeat = repeat;
     window.seek = seek;
+    window.loadMoreSongs = loadMoreSongs;
+    window.playAll = playAll;
+    window.shuffleAll = shuffleAll;
 
     // Initial load
-    fetchSongs("tamil");
+    fetchSongs();
   </script>
 </body>
 </html>
