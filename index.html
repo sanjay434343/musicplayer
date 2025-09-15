@@ -296,6 +296,7 @@
       padding: 16px;
       cursor: pointer;
       transition: background 0.2s;
+      position: relative;
     }
     
     .card:hover {
@@ -326,6 +327,32 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    
+    .card-play-btn {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      background: #1db954;
+      border: none;
+      border-radius: 50%;
+      color: #000;
+      font-size: 16px;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+    
+    .card:hover .card-play-btn {
+      display: flex;
+    }
+    
+    .card-play-btn:hover {
+      transform: scale(1.05);
     }
     
     /* Songs Table */
@@ -707,6 +734,18 @@
       align-items: center;
       height: 200px;
       color: #f77;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .error-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .error-message {
+      font-size: 14px;
+      color: #b3b3b3;
     }
     
     /* Responsive */
@@ -811,7 +850,7 @@
           <div class="sidebar-item active" onclick="switchView('songs')">
             <span>🏠</span> Home
           </div>
-          <div class="sidebar-item" onclick="switchView('search')">
+          <div class="sidebar-item" onclick="showSearch()">
             <span>🔍</span> Search
           </div>
           <div class="sidebar-item" onclick="showLibrary()">
@@ -955,26 +994,16 @@
       repeatMode: 0, // 0: off, 1: all, 2: one
       volume: 0.75,
       isMuted: false,
-      queue: [],
-      originalQueue: [],
       searchQuery: '',
       currentPage: {
         songs: 0,
         albums: 0,
         artists: 0,
         playlists: 0
-      }
-    };
-
-    // Local Storage Keys
-    const STORAGE_KEYS = {
-      LIKED_SONGS: 'spotify_liked_songs',
-      RECENT_SONGS: 'spotify_recent_songs',
-      VOLUME: 'spotify_volume',
-      REPEAT_MODE: 'spotify_repeat_mode',
-      SHUFFLE: 'spotify_shuffle',
-      LANGUAGE: 'spotify_language',
-      LAST_PLAYED: 'spotify_last_played'
+      },
+      likedSongs: [],
+      recentSongs: [],
+      currentPlaylist: null
     };
 
     // DOM Elements
@@ -1009,72 +1038,34 @@
     });
 
     function initializeApp() {
-      loadFromLocalStorage();
       setupEventListeners();
-      loadContent();
-    }
-
-    // Local Storage Functions
-    function saveToLocalStorage(key, data) {
-      try {
-        localStorage.setItem(key, JSON.stringify(data));
-      } catch (error) {
-        console.error('Failed to save to localStorage:', error);
-      }
-    }
-
-    function loadFromLocalStorage() {
-      try {
-        // Load liked songs
-        const likedSongs = JSON.parse(localStorage.getItem(STORAGE_KEYS.LIKED_SONGS)) || [];
-        appState.likedSongs = likedSongs;
-
-        // Load recent songs
-        const recentSongs = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_SONGS)) || [];
-        appState.recentSongs = recentSongs;
-
-        // Load settings
-        appState.volume = parseFloat(localStorage.getItem(STORAGE_KEYS.VOLUME)) || 0.75;
-        appState.repeatMode = parseInt(localStorage.getItem(STORAGE_KEYS.REPEAT_MODE)) || 0;
-        appState.isShuffled = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHUFFLE)) || false;
-        appState.currentLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'tamil';
-
-        // Apply settings
-        elements.languageSelect.value = appState.currentLanguage;
-        elements.volumeFilled.style.width = (appState.volume * 100) + '%';
-        updateShuffleButton();
-        updateRepeatButton();
-
-        // Load last played song
-        const lastPlayed = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_PLAYED));
-        if (lastPlayed) {
-          setupBottomPlayer(lastPlayed, false);
-        }
-
-        updateSidebar();
-      } catch (error) {
-        console.error('Failed to load from localStorage:', error);
-      }
+      loadDefaultContent();
     }
 
     function setupEventListeners() {
       // Language change
       elements.languageSelect.addEventListener('change', function() {
         appState.currentLanguage = this.value;
-        saveToLocalStorage(STORAGE_KEYS.LANGUAGE, appState.currentLanguage);
         elements.playlistTitle.textContent = `${this.options[this.selectedIndex].text} Songs`;
         resetAndLoadContent();
       });
 
-      // Search
+      // Search with debouncing
       let searchTimeout;
       elements.searchInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         appState.searchQuery = this.value.trim();
         searchTimeout = setTimeout(() => {
-          resetAndLoadContent();
+          if (appState.searchQuery) {
+            performSearch(appState.searchQuery);
+          } else {
+            loadDefaultContent();
+          }
         }, 500);
       });
+
+      // Volume controls
+      elements.volumeFilled.style.width = (appState.volume * 100) + '%';
     }
 
     function resetAndLoadContent() {
@@ -1083,10 +1074,10 @@
       appState.albums = [];
       appState.artists = [];
       appState.playlists = [];
-      loadContent();
+      loadDefaultContent();
     }
 
-    function loadContent() {
+    function loadDefaultContent() {
       switch (appState.currentView) {
         case 'songs':
           loadSongs();
@@ -1103,20 +1094,62 @@
       }
     }
 
-    // API Functions
+    // API Functions with proper error handling
+    async function performSearch(query) {
+      try {
+        const response = await fetch(`${BASE_API_URL}/search?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Update all content types with search results
+          if (data.data.songs && data.data.songs.results) {
+            appState.songs = data.data.songs.results.filter(song => 
+              !appState.currentLanguage || 
+              song.language === appState.currentLanguage
+            );
+          }
+          
+          if (data.data.albums && data.data.albums.results) {
+            appState.albums = data.data.albums.results.filter(album => 
+              !appState.currentLanguage || 
+              album.language === appState.currentLanguage
+            );
+          }
+          
+          if (data.data.artists && data.data.artists.results) {
+            appState.artists = data.data.artists.results;
+          }
+          
+          if (data.data.playlists && data.data.playlists.results) {
+            appState.playlists = data.data.playlists.results.filter(playlist => 
+              !appState.currentLanguage || 
+              playlist.language === appState.currentLanguage
+            );
+          }
+          
+          // Display results based on current view
+          displayCurrentView();
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        showError('Failed to search. Please try again.');
+      }
+    }
+
     async function loadSongs(append = false) {
       try {
-        if (!append) elements.songsList.innerHTML = createLoadingHTML();
+        if (!append) showLoading('songsList');
         
         const query = appState.searchQuery || getRandomQuery('songs');
-        const url = `${BASE_API_URL}/search/songs?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.songs}`;
+        const url = `${BASE_API_URL}/search/songs?query=${encodeURIComponent(query)}&limit=50&page=${appState.currentPage.songs}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success && data.data.results) {
+        if (data.success && data.data && data.data.results) {
           const newSongs = data.data.results.filter(song => 
-            song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            !appState.currentLanguage || 
+            song.language === appState.currentLanguage
           );
           
           if (append) {
@@ -1127,26 +1160,30 @@
           
           displaySongs();
           appState.currentPage.songs++;
+          updateLoadMoreButton('songs', newSongs.length > 0);
+        } else {
+          throw new Error('No songs found');
         }
       } catch (error) {
         console.error('Error loading songs:', error);
-        elements.songsList.innerHTML = '<div class="error">Failed to load songs</div>';
+        showError('Failed to load songs', 'songsList');
       }
     }
 
     async function loadAlbums(append = false) {
       try {
-        if (!append) elements.albumsGrid.innerHTML = createLoadingHTML();
+        if (!append) showLoading('albumsGrid');
         
         const query = appState.searchQuery || getRandomQuery('albums');
-        const url = `${BASE_API_URL}/search/albums?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.albums}`;
+        const url = `${BASE_API_URL}/search/albums?query=${encodeURIComponent(query)}&limit=20&page=${appState.currentPage.albums}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success && data.data.results) {
+        if (data.success && data.data && data.data.results) {
           const newAlbums = data.data.results.filter(album => 
-            album.language && album.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            !appState.currentLanguage || 
+            album.language === appState.currentLanguage
           );
           
           if (append) {
@@ -1157,24 +1194,27 @@
           
           displayAlbums();
           appState.currentPage.albums++;
+          updateLoadMoreButton('albums', newAlbums.length > 0);
+        } else {
+          throw new Error('No albums found');
         }
       } catch (error) {
         console.error('Error loading albums:', error);
-        elements.albumsGrid.innerHTML = '<div class="error">Failed to load albums</div>';
+        showError('Failed to load albums', 'albumsGrid');
       }
     }
 
     async function loadArtists(append = false) {
       try {
-        if (!append) elements.artistsGrid.innerHTML = createLoadingHTML();
+        if (!append) showLoading('artistsGrid');
         
         const query = appState.searchQuery || getRandomQuery('artists');
-        const url = `${BASE_API_URL}/search/artists?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.artists}`;
+        const url = `${BASE_API_URL}/search/artists?query=${encodeURIComponent(query)}&limit=20&page=${appState.currentPage.artists}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success && data.data.results) {
+        if (data.success && data.data && data.data.results) {
           const newArtists = data.data.results;
           
           if (append) {
@@ -1185,26 +1225,30 @@
           
           displayArtists();
           appState.currentPage.artists++;
+          updateLoadMoreButton('artists', newArtists.length > 0);
+        } else {
+          throw new Error('No artists found');
         }
       } catch (error) {
         console.error('Error loading artists:', error);
-        elements.artistsGrid.innerHTML = '<div class="error">Failed to load artists</div>';
+        showError('Failed to load artists', 'artistsGrid');
       }
     }
 
     async function loadPlaylists(append = false) {
       try {
-        if (!append) elements.playlistsGrid.innerHTML = createLoadingHTML();
+        if (!append) showLoading('playlistsGrid');
         
         const query = appState.searchQuery || getRandomQuery('playlists');
-        const url = `${BASE_API_URL}/search/playlists?query=${encodeURIComponent(query)}&limit=500&page=${appState.currentPage.playlists}`;
+        const url = `${BASE_API_URL}/search/playlists?query=${encodeURIComponent(query)}&limit=20&page=${appState.currentPage.playlists}`;
         
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success && data.data.results) {
+        if (data.success && data.data && data.data.results) {
           const newPlaylists = data.data.results.filter(playlist => 
-            playlist.language && playlist.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            !appState.currentLanguage || 
+            playlist.language === appState.currentLanguage
           );
           
           if (append) {
@@ -1215,13 +1259,87 @@
           
           displayPlaylists();
           appState.currentPage.playlists++;
+          updateLoadMoreButton('playlists', newPlaylists.length > 0);
+        } else {
+          throw new Error('No playlists found');
         }
       } catch (error) {
         console.error('Error loading playlists:', error);
-        elements.playlistsGrid.innerHTML = '<div class="error">Failed to load playlists</div>';
+        showError('Failed to load playlists', 'playlistsGrid');
       }
     }
 
+    // Load playlist songs - this is the key functionality you requested
+    async function loadPlaylistSongs(playlistId) {
+      try {
+        showLoading('songsList');
+        const url = `${BASE_API_URL}/playlists?id=${playlistId}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.songs) {
+          appState.songs = data.data.songs;
+          appState.currentPlaylist = data.data;
+          switchView('songs');
+          elements.playlistTitle.textContent = data.data.name;
+          displaySongs();
+        } else {
+          throw new Error('Failed to load playlist songs');
+        }
+      } catch (error) {
+        console.error('Error loading playlist songs:', error);
+        showError('Failed to load playlist songs', 'songsList');
+      }
+    }
+
+    // Load album songs
+    async function loadAlbumSongs(albumId) {
+      try {
+        showLoading('songsList');
+        const url = `${BASE_API_URL}/albums?ids=${albumId}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data[0] && data.data[0].songs) {
+          appState.songs = data.data[0].songs;
+          switchView('songs');
+          elements.playlistTitle.textContent = data.data[0].name;
+          displaySongs();
+        } else {
+          throw new Error('Failed to load album songs');
+        }
+      } catch (error) {
+        console.error('Error loading album songs:', error);
+        showError('Failed to load album songs', 'songsList');
+      }
+    }
+
+    // Load artist songs
+    async function loadArtistSongs(artistId) {
+      try {
+        showLoading('songsList');
+        const url = `${BASE_API_URL}/artists/${artistId}/songs?limit=50`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.songs) {
+          appState.songs = data.data.songs;
+          switchView('songs');
+          elements.playlistTitle.textContent = 'Artist Songs';
+          displaySongs();
+        } else {
+          throw new Error('Failed to load artist songs');
+        }
+      } catch (error) {
+        console.error('Error loading artist songs:', error);
+        showError('Failed to load artist songs', 'songsList');
+      }
+    }
+
+    // Load suggestions for current song
     async function loadSuggestions() {
       if (!appState.songs.length || appState.currentIdx >= appState.songs.length) return;
       
@@ -1234,16 +1352,10 @@
         
         if (data.success && data.data) {
           const suggestions = data.data.filter(song => 
-            song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            !appState.songs.some(existingSong => existingSong.id === song.id)
           );
           
-          // Add unique suggestions to the current songs list
-          suggestions.forEach(suggestion => {
-            if (!appState.songs.some(song => song.id === suggestion.id)) {
-              appState.songs.push(suggestion);
-            }
-          });
-          
+          appState.songs = [...appState.songs, ...suggestions];
           displaySongs();
         }
       } catch (error) {
@@ -1252,6 +1364,23 @@
     }
 
     // Display Functions
+    function displayCurrentView() {
+      switch (appState.currentView) {
+        case 'songs':
+          displaySongs();
+          break;
+        case 'albums':
+          displayAlbums();
+          break;
+        case 'artists':
+          displayArtists();
+          break;
+        case 'playlists':
+          displayPlaylists();
+          break;
+      }
+    }
+
     function displaySongs() {
       elements.songsList.innerHTML = "";
       elements.songsCount.textContent = appState.songs.length;
@@ -1261,23 +1390,28 @@
         songRow.className = "song-row" + (idx === appState.currentIdx && appState.isPlaying ? " active playing" : "");
         songRow.onclick = () => playSong(idx);
         
+        // Get proper image URL
+        const imageUrl = getImageUrl(song.image, '150x150');
+        const artistNames = song.artists && song.artists.primary 
+          ? song.artists.primary.map(a => a.name).join(", ")
+          : song.primaryArtists || 'Unknown Artist';
+        const albumName = song.album && song.album.name ? song.album.name : 'Unknown Album';
+        
         songRow.innerHTML = `
           <div class="song-index">${idx + 1}<span class="play-icon">▶</span></div>
           <div class="song-info">
-            <img class="song-cover-small" src="${getImg(song.image, '150x150')}" alt="" onerror="this.style.display='none'">
+            <img class="song-cover-small" src="${imageUrl}" alt="" onerror="this.style.display='none'">
             <div class="song-details">
-              <div class="song-name">${song.name}</div>
-              <div class="song-artist">${song.artists.primary.map(a => a.name).join(", ")}</div>
+              <div class="song-name">${song.name || song.title}</div>
+              <div class="song-artist">${artistNames}</div>
             </div>
           </div>
-          <div class="song-album">${song.album?.name || 'Unknown Album'}</div>
+          <div class="song-album">${albumName}</div>
           <div class="song-duration">${formatDuration(song.duration)}</div>
         `;
         
         elements.songsList.appendChild(songRow);
       });
-
-      updateLoadMoreButton('songs');
     }
 
     function displayAlbums() {
@@ -1288,16 +1422,20 @@
         card.className = "card";
         card.onclick = () => loadAlbumSongs(album.id);
         
+        const imageUrl = getImageUrl(album.image, '500x500');
+        const artistNames = album.artists && album.artists.primary 
+          ? album.artists.primary.map(a => a.name).join(", ")
+          : album.artist || 'Unknown Artist';
+        
         card.innerHTML = `
-          <img class="card-image" src="${getImg(album.image, '500x500')}" alt="${album.name}">
-          <div class="card-title">${album.name}</div>
-          <div class="card-subtitle">${album.artists.primary.map(a => a.name).join(", ")}</div>
+          <img class="card-image" src="${imageUrl}" alt="${album.name || album.title}">
+          <div class="card-title">${album.name || album.title}</div>
+          <div class="card-subtitle">${artistNames}</div>
+          <button class="card-play-btn" onclick="event.stopPropagation(); loadAlbumSongs('${album.id}')">▶</button>
         `;
         
         elements.albumsGrid.appendChild(card);
       });
-
-      updateLoadMoreButton('albums');
     }
 
     function displayArtists() {
@@ -1308,16 +1446,17 @@
         card.className = "card";
         card.onclick = () => loadArtistSongs(artist.id);
         
+        const imageUrl = getImageUrl(artist.image, '500x500');
+        
         card.innerHTML = `
-          <img class="card-image" src="${getImg(artist.image, '500x500')}" alt="${artist.name}" style="border-radius: 50%;">
-          <div class="card-title">${artist.name}</div>
+          <img class="card-image" src="${imageUrl}" alt="${artist.name || artist.title}" style="border-radius: 50%;">
+          <div class="card-title">${artist.name || artist.title}</div>
           <div class="card-subtitle">Artist</div>
+          <button class="card-play-btn" onclick="event.stopPropagation(); loadArtistSongs('${artist.id}')">▶</button>
         `;
         
         elements.artistsGrid.appendChild(card);
       });
-
-      updateLoadMoreButton('artists');
     }
 
     function displayPlaylists() {
@@ -1328,80 +1467,69 @@
         card.className = "card";
         card.onclick = () => loadPlaylistSongs(playlist.id);
         
+        const imageUrl = getImageUrl(playlist.image, '500x500');
+        
         card.innerHTML = `
-          <img class="card-image" src="${getImg(playlist.image, '500x500')}" alt="${playlist.name}">
-          <div class="card-title">${playlist.name}</div>
+          <img class="card-image" src="${imageUrl}" alt="${playlist.name || playlist.title}">
+          <div class="card-title">${playlist.name || playlist.title}</div>
           <div class="card-subtitle">${playlist.songCount || 0} songs</div>
+          <button class="card-play-btn" onclick="event.stopPropagation(); loadPlaylistSongs('${playlist.id}')">▶</button>
         `;
         
         elements.playlistsGrid.appendChild(card);
       });
-
-      updateLoadMoreButton('playlists');
-    }
-
-    function updateSidebar() {
-      // Update recently played
-      elements.recentlyPlayedList.innerHTML = "";
-      (appState.recentSongs || []).slice(0, 5).forEach(song => {
-        const item = document.createElement("div");
-        item.className = "sidebar-item";
-        item.innerHTML = `<span>🎵</span> ${song.name}`;
-        item.onclick = () => {
-          const songIndex = appState.songs.findIndex(s => s.id === song.id);
-          if (songIndex !== -1) playSong(songIndex);
-        };
-        elements.recentlyPlayedList.appendChild(item);
-      });
-
-      // Update liked songs
-      elements.likedSongsList.innerHTML = "";
-      (appState.likedSongs || []).slice(0, 5).forEach(song => {
-        const item = document.createElement("div");
-        item.className = "sidebar-item";
-        item.innerHTML = `<span>💚</span> ${song.name}`;
-        item.onclick = () => {
-          const songIndex = appState.songs.findIndex(s => s.id === song.id);
-          if (songIndex !== -1) playSong(songIndex);
-        };
-        elements.likedSongsList.appendChild(item);
-      });
     }
 
     // Music Player Functions
-    function playSong(idx) {
+    async function playSong(idx) {
       appState.currentIdx = idx;
-      appState.isPlaying = true;
-      
       const song = appState.songs[appState.currentIdx];
       if (!song) return;
       
-      // Add to recent songs
-      addToRecent(song);
-      
-      setupBottomPlayer(song, true);
-      setupAudioPlayer(song);
-      updateActiveSong();
+      try {
+        // Get detailed song info with download URLs
+        const response = await fetch(`${BASE_API_URL}/songs/${song.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.length > 0) {
+          const detailedSong = data.data[0];
+          appState.songs[idx] = { ...song, ...detailedSong };
+          setupBottomPlayer(appState.songs[idx], true);
+          setupAudioPlayer(appState.songs[idx]);
+          updateActiveSong();
+          addToRecent(appState.songs[idx]);
+        }
+      } catch (error) {
+        console.error('Error loading song details:', error);
+        setupBottomPlayer(song, false);
+        updateActiveSong();
+      }
     }
 
     function setupBottomPlayer(song, shouldPlay = false) {
       elements.bottomPlayer.style.display = 'grid';
-      elements.nowPlayingCover.src = getImg(song.image, '500x500');
-      elements.nowPlayingName.textContent = song.name;
-      elements.nowPlayingArtist.textContent = song.artists.primary.map(a => a.name).join(", ");
+      elements.nowPlayingCover.src = getImageUrl(song.image, '500x500');
+      elements.nowPlayingName.textContent = song.name || song.title;
+      
+      const artistNames = song.artists && song.artists.primary 
+        ? song.artists.primary.map(a => a.name).join(", ")
+        : song.primaryArtists || 'Unknown Artist';
+      elements.nowPlayingArtist.textContent = artistNames;
+      
+      appState.isPlaying = shouldPlay;
       elements.playPauseBtn.innerHTML = shouldPlay ? '⏸' : '▶';
       
       // Update like button
       const isLiked = appState.likedSongs.some(likedSong => likedSong.id === song.id);
       elements.likeBtn.innerHTML = isLiked ? '💚' : '♡';
       elements.likeBtn.classList.toggle('liked', isLiked);
-      
-      // Save last played
-      saveToLocalStorage(STORAGE_KEYS.LAST_PLAYED, song);
     }
 
     function setupAudioPlayer(song) {
-      appState.audio = document.getElementById("audioPlayer");
+      if (!appState.audio) {
+        appState.audio = document.getElementById("audioPlayer");
+      }
+      
       if (!appState.audio || !song.downloadUrl) return;
       
       let url = "";
@@ -1457,7 +1585,6 @@
       if (!appState.songs.length) return;
       
       if (appState.repeatMode === 2) {
-        // Repeat one - replay current song
         playSong(appState.currentIdx);
         return;
       }
@@ -1502,21 +1629,11 @@
     // Control Functions
     function toggleShuffle() {
       appState.isShuffled = !appState.isShuffled;
-      saveToLocalStorage(STORAGE_KEYS.SHUFFLE, appState.isShuffled);
-      updateShuffleButton();
+      elements.shuffleBtn.style.color = appState.isShuffled ? '#1db954' : '#b3b3b3';
     }
 
     function toggleRepeat() {
       appState.repeatMode = (appState.repeatMode + 1) % 3;
-      saveToLocalStorage(STORAGE_KEYS.REPEAT_MODE, appState.repeatMode);
-      updateRepeatButton();
-    }
-
-    function updateShuffleButton() {
-      elements.shuffleBtn.style.color = appState.isShuffled ? '#1db954' : '#b3b3b3';
-    }
-
-    function updateRepeatButton() {
       const colors = ['#b3b3b3', '#1db954', '#1db954'];
       const icons = ['🔁', '🔁', '🔂'];
       elements.repeatBtn.style.color = colors[appState.repeatMode];
@@ -1539,7 +1656,6 @@
         elements.likeBtn.classList.remove('liked');
       }
       
-      saveToLocalStorage(STORAGE_KEYS.LIKED_SONGS, appState.likedSongs);
       updateSidebar();
     }
 
@@ -1552,8 +1668,6 @@
       
       appState.recentSongs.unshift(song);
       appState.recentSongs = appState.recentSongs.slice(0, 20);
-      
-      saveToLocalStorage(STORAGE_KEYS.RECENT_SONGS, appState.recentSongs);
       updateSidebar();
     }
 
@@ -1583,8 +1697,6 @@
       if (appState.audio) {
         appState.audio.volume = appState.isMuted ? 0 : appState.volume;
       }
-      
-      saveToLocalStorage(STORAGE_KEYS.VOLUME, appState.volume);
     }
 
     function toggleMute() {
@@ -1609,10 +1721,7 @@
       document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
       document.getElementById(view + 'View')?.classList.remove('hidden');
       
-      // Update sidebar active state
-      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
-      
-      loadContent();
+      loadDefaultContent();
     }
 
     // Load More Functions
@@ -1621,10 +1730,10 @@
     function loadMoreArtists() { loadArtists(true); }
     function loadMorePlaylists() { loadPlaylists(true); }
 
-    function updateLoadMoreButton(type) {
+    function updateLoadMoreButton(type, hasMore) {
       const container = document.getElementById(`loadMore${type.charAt(0).toUpperCase() + type.slice(1)}Container`);
       if (container) {
-        container.style.display = 'flex';
+        container.style.display = hasMore ? 'flex' : 'none';
       }
     }
 
@@ -1643,55 +1752,78 @@
       }
     }
 
+    function showLibrary() {
+      appState.songs = [...appState.likedSongs];
+      switchView('songs');
+      elements.playlistTitle.textContent = 'Your Library';
+      displaySongs();
+    }
+
+    function showSearch() {
+      elements.searchInput.focus();
+    }
+
+    function updateSidebar() {
+      // Update recently played
+      elements.recentlyPlayedList.innerHTML = "";
+      appState.recentSongs.slice(0, 5).forEach(song => {
+        const item = document.createElement("div");
+        item.className = "sidebar-item";
+        item.innerHTML = `<span>🎵</span> ${song.name || song.title}`;
+        item.onclick = () => {
+          const songIndex = appState.songs.findIndex(s => s.id === song.id);
+          if (songIndex !== -1) playSong(songIndex);
+        };
+        elements.recentlyPlayedList.appendChild(item);
+      });
+
+      // Update liked songs
+      elements.likedSongsList.innerHTML = "";
+      appState.likedSongs.slice(0, 5).forEach(song => {
+        const item = document.createElement("div");
+        item.className = "sidebar-item";
+        item.innerHTML = `<span>💚</span> ${song.name || song.title}`;
+        item.onclick = () => {
+          const songIndex = appState.songs.findIndex(s => s.id === song.id);
+          if (songIndex !== -1) playSong(songIndex);
+        };
+        elements.likedSongsList.appendChild(item);
+      });
+    }
+
     // Utility Functions
     function getRandomQuery(type) {
       const queries = {
         songs: {
-          tamil: ['tamil hits', 'ar rahman tamil', 'ilaiyaraaja', 'anirudh tamil'],
-          hindi: ['bollywood hits', 'arijit singh', 'kishore kumar', 'lata mangeshkar'],
-          telugu: ['telugu hits', 'ss thaman', 'devi sri prasad', 'mm keeravani'],
-          malayalam: ['malayalam hits', 'ilaiyaraaja malayalam', 'vidyasagar', 'shaan rahman'],
-          kannada: ['kannada hits', 'hamsalekha', 'v harikrishna', 'arjun janya'],
-          bengali: ['rabindra sangeet', 'kishore kumar bengali', 'hemant kumar'],
-          punjabi: ['punjabi hits', 'gurdas maan', 'diljit dosanjh'],
-          marathi: ['marathi hits', 'ajay atul', 'shankar mahadevan marathi'],
-          gujarati: ['gujarati folk', 'gujarati bhajan', 'gujarati hits'],
+          tamil: ['ar rahman tamil', 'ilaiyaraaja', 'anirudh tamil', 'harris jayaraj', 'yuvan shankar raja'],
+          hindi: ['arijit singh', 'kishore kumar', 'lata mangeshkar', 'bollywood hits'],
+          telugu: ['ss thaman', 'devi sri prasad', 'mm keeravani', 'telugu hits'],
+          malayalam: ['ilaiyaraaja malayalam', 'vidyasagar', 'shaan rahman', 'malayalam hits'],
+          kannada: ['hamsalekha', 'v harikrishna', 'arjun janya', 'kannada hits'],
           english: ['pop hits', 'rock classics', 'billboard hits']
         },
         albums: {
-          tamil: ['tamil albums', 'kollywood music', 'tamil movie music'],
-          hindi: ['bollywood albums', 'hindi movie music', 'indian albums'],
-          telugu: ['tollywood music', 'telugu albums', 'telugu cinema'],
+          tamil: ['tamil albums', 'kollywood music'],
+          hindi: ['bollywood albums', 'hindi movie music'],
+          telugu: ['tollywood music', 'telugu albums'],
           malayalam: ['mollywood music', 'malayalam albums'],
           kannada: ['sandalwood music', 'kannada albums'],
-          bengali: ['bengali albums', 'bengali cinema'],
-          punjabi: ['punjabi albums', 'punjabi music'],
-          marathi: ['marathi albums', 'marathi cinema'],
-          gujarati: ['gujarati albums', 'gujarati music'],
           english: ['english albums', 'western music']
         },
         artists: {
-          tamil: ['tamil singers', 'tamil composers', 'kollywood artists'],
-          hindi: ['bollywood singers', 'hindi artists', 'indian musicians'],
+          tamil: ['tamil singers', 'kollywood artists'],
+          hindi: ['bollywood singers', 'hindi artists'],
           telugu: ['telugu singers', 'tollywood artists'],
           malayalam: ['malayalam singers', 'mollywood artists'],
           kannada: ['kannada singers', 'sandalwood artists'],
-          bengali: ['bengali singers', 'bengali artists'],
-          punjabi: ['punjabi singers', 'punjabi artists'],
-          marathi: ['marathi singers', 'marathi artists'],
-          gujarati: ['gujarati singers', 'gujarati artists'],
           english: ['english artists', 'pop artists']
         },
         playlists: {
-          tamil: ['tamil playlist', 'kollywood hits', 'tamil melodies'],
-          hindi: ['bollywood playlist', 'hindi hits', 'romantic hindi'],
+          tamil: ['tamil playlist', 'kollywood hits'],
+          hindi: ['bollywood playlist', 'hindi hits'],
           telugu: ['telugu playlist', 'tollywood hits'],
           malayalam: ['malayalam playlist', 'mollywood hits'],
           kannada: ['kannada playlist', 'sandalwood hits'],
-          bengali: ['bengali playlist', 'bengali hits'],
-          punjabi: ['punjabi playlist', 'punjabi hits'],
-          marathi: ['marathi playlist', 'marathi hits'],
-          gujarati: ['gujarati playlist', 'gujarati hits'],
           english: ['english playlist', 'pop playlist']
         }
       };
@@ -1700,13 +1832,30 @@
       return langQueries[Math.floor(Math.random() * langQueries.length)];
     }
 
-    function createLoadingHTML() {
-      return `
-        <div class="loading">
-          <div class="loading-spinner"></div>
-          <div>Loading...</div>
-        </div>
-      `;
+    function showLoading(elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.innerHTML = `
+          <div class="loading">
+            <div class="loading-spinner"></div>
+            <div>Loading...</div>
+          </div>
+        `;
+      }
+    }
+
+    function showError(message, elementId) {
+      const element = elementId ? document.getElementById(elementId) : null;
+      if (element) {
+        element.innerHTML = `
+          <div class="error">
+            <div class="error-title">Oops! Something went wrong</div>
+            <div class="error-message">${message}</div>
+          </div>
+        `;
+      } else {
+        console.error(message);
+      }
     }
 
     function formatDuration(seconds) {
@@ -1716,62 +1865,18 @@
       return `${mins}:${secs}`;
     }
 
-    function getImg(imageArray, quality) {
-      if (!imageArray || !imageArray.length) return "";
-      return imageArray.find(img => img.quality === quality)?.url || imageArray[0].url;
-    }
-
-    // Album/Artist/Playlist specific loading functions
-    async function loadAlbumSongs(albumId) {
-      try {
-        const response = await fetch(`${BASE_API_URL}/albums?ids=${albumId}`);
-        const data = await response.json();
-        
-        if (data.success && data.data[0] && data.data[0].songs) {
-          appState.songs = data.data[0].songs;
-          switchView('songs');
-          displaySongs();
-        }
-      } catch (error) {
-        console.error('Error loading album songs:', error);
+    function getImageUrl(imageArray, quality) {
+      if (!imageArray || !imageArray.length) {
+        return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23282828'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='14' fill='%23b3b3b3' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
       }
+      
+      if (typeof imageArray === 'string') return imageArray;
+      
+      const targetImage = imageArray.find(img => img.quality === quality);
+      return targetImage ? targetImage.url : imageArray[0].url;
     }
 
-    async function loadArtistSongs(artistId) {
-      try {
-        const response = await fetch(`${BASE_API_URL}/artists/${artistId}/songs?limit=50`);
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          appState.songs = data.data;
-          switchView('songs');
-          displaySongs();
-        }
-      } catch (error) {
-        console.error('Error loading artist songs:', error);
-      }
-    }
-
-    async function loadPlaylistSongs(playlistId) {
-      try {
-        const response = await fetch(`${BASE_API_URL}/playlists?ids=${playlistId}`);
-        const data = await response.json();
-        
-        if (data.success && data.data[0] && data.data[0].songs) {
-          appState.songs = data.data[0].songs;
-          switchView('songs');
-          displaySongs();
-        }
-      } catch (error) {
-        console.error('Error loading playlist songs:', error);
-      }
-    }
-
-    // Initialize app state
-    appState.likedSongs = [];
-    appState.recentSongs = [];
-
-    // Make functions globally available
+    // Global functions for onclick handlers
     window.switchView = switchView;
     window.togglePlay = togglePlay;
     window.nextSong = nextSong;
@@ -1790,93 +1895,14 @@
     window.shuffleAll = shuffleAll;
     window.loadSuggestions = loadSuggestions;
     window.showLibrary = showLibrary;
+    window.showSearch = showSearch;
     window.loadAlbumSongs = loadAlbumSongs;
     window.loadArtistSongs = loadArtistSongs;
     window.loadPlaylistSongs = loadPlaylistSongs;
 
-    // Additional utility functions
-    function showLibrary() {
-      // Switch to a library view showing liked songs and recent songs
-      appState.songs = [...appState.likedSongs];
-      switchView('songs');
-      elements.playlistTitle.textContent = 'Your Library';
-      displaySongs();
-    }
-
-    // Global search function for comprehensive search
-    async function globalSearch(query) {
-      if (!query.trim()) return;
-      
-      try {
-        const response = await fetch(`${BASE_API_URL}/search?query=${encodeURIComponent(query)}`);
-        const data = await response.json();
-        
-        if (data.success && data.data) {
-          // Update all content types with search results
-          if (data.data.songs && data.data.songs.results) {
-            appState.songs = data.data.songs.results.filter(song => 
-              song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
-            );
-          }
-          
-          if (data.data.albums && data.data.albums.results) {
-            appState.albums = data.data.albums.results.filter(album => 
-              album.language && album.language.toLowerCase() === appState.currentLanguage.toLowerCase()
-            );
-          }
-          
-          if (data.data.artists && data.data.artists.results) {
-            appState.artists = data.data.artists.results;
-          }
-          
-          if (data.data.playlists && data.data.playlists.results) {
-            appState.playlists = data.data.playlists.results.filter(playlist => 
-              playlist.language && playlist.language.toLowerCase() === appState.currentLanguage.toLowerCase()
-            );
-          }
-          
-          // Display results based on current view
-          switch (appState.currentView) {
-            case 'songs':
-              displaySongs();
-              break;
-            case 'albums':
-              displayAlbums();
-              break;
-            case 'artists':
-              displayArtists();
-              break;
-            case 'playlists':
-              displayPlaylists();
-              break;
-          }
-        }
-      } catch (error) {
-        console.error('Error in global search:', error);
-      }
-    }
-
-    // Enhanced search with debouncing and global search
-    function setupEnhancedSearch() {
-      let searchTimeout;
-      elements.searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        appState.searchQuery = this.value.trim();
-        
-        searchTimeout = setTimeout(() => {
-          if (appState.searchQuery) {
-            globalSearch(appState.searchQuery);
-          } else {
-            resetAndLoadContent();
-          }
-        }, 500);
-      });
-    }
-
-    // Quality of life improvements
+    // Enhanced functionality
     function setupKeyboardShortcuts() {
       document.addEventListener('keydown', function(e) {
-        // Prevent shortcuts when typing in search
         if (e.target === elements.searchInput) return;
         
         switch(e.code) {
@@ -1896,166 +1922,59 @@
               prevSong();
             }
             break;
-          case 'ArrowUp':
-            if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              appState.volume = Math.min(1, appState.volume + 0.1);
-              setVolumeFromValue(appState.volume);
-            }
-            break;
-          case 'ArrowDown':
-            if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              appState.volume = Math.max(0, appState.volume - 0.1);
-              setVolumeFromValue(appState.volume);
-            }
-            break;
-          case 'KeyL':
-            if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              toggleLike();
-            }
-            break;
-          case 'KeyS':
-            if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              toggleShuffle();
-            }
-            break;
-          case 'KeyR':
-            if (e.ctrlKey || e.metaKey) {
-              e.preventDefault();
-              toggleRepeat();
-            }
-            break;
         }
       });
     }
 
-    function setVolumeFromValue(volume) {
-      appState.volume = volume;
-      elements.volumeFilled.style.width = (appState.volume * 100) + '%';
-      
-      if (appState.audio) {
-        appState.audio.volume = appState.isMuted ? 0 : appState.volume;
-      }
-      
-      saveToLocalStorage(STORAGE_KEYS.VOLUME, appState.volume);
-    }
-
-    // Auto-save functionality
-    function setupAutoSave() {
-      setInterval(() => {
-        // Save current state periodically
-        saveToLocalStorage(STORAGE_KEYS.RECENT_SONGS, appState.recentSongs);
-        saveToLocalStorage(STORAGE_KEYS.LIKED_SONGS, appState.likedSongs);
-        
-        if (appState.songs[appState.currentIdx]) {
-          saveToLocalStorage(STORAGE_KEYS.LAST_PLAYED, appState.songs[appState.currentIdx]);
-        }
-      }, 30000); // Save every 30 seconds
-    }
-
-    // Enhanced initialization
-    function initializeEnhancedApp() {
-      initializeApp();
-      setupEnhancedSearch();
-      setupKeyboardShortcuts();
-      setupAutoSave();
-      
-      // Load initial content with better error handling
-      loadContent().catch(error => {
-        console.error('Failed to load initial content:', error);
-        // Fallback to basic loading
-        loadSongs();
-      });
-    }
-
-    // Replace the original initialization
+    // Initialize keyboard shortcuts
     document.addEventListener('DOMContentLoaded', function() {
-      initializeEnhancedApp();
+      setupKeyboardShortcuts();
     });
 
-    // Advanced queue management
-    function addToQueue(song) {
-      appState.queue.push(song);
-      // Optional: Show queue UI or notification
-    }
+    // Auto-update UI periodically
+    setInterval(() => {
+      if (appState.songs.length && elements.songsCount) {
+        elements.songsCount.textContent = appState.songs.length;
+      }
+    }, 5000);
 
-    function clearQueue() {
-      appState.queue = [];
-    }
+    // Handle offline/online status
+    window.addEventListener('online', () => {
+      console.log('App is back online');
+    });
 
-    function playFromQueue() {
-      if (appState.queue.length > 0) {
-        const nextSong = appState.queue.shift();
-        const songIndex = appState.songs.findIndex(s => s.id === nextSong.id);
-        if (songIndex !== -1) {
-          playSong(songIndex);
-        }
+    window.addEventListener('offline', () => {
+      console.log('App is offline - some features may be limited');
+    });
+
+    // Enhanced error handling for fetch requests
+    function handleFetchError(error) {
+      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        return 'Network error. Please check your internet connection.';
+      } else if (error.message.includes('404')) {
+        return 'Content not found. Please try a different search.';
+      } else if (error.message.includes('500')) {
+        return 'Server error. Please try again later.';
+      } else {
+        return 'Something went wrong. Please try again.';
       }
     }
 
-    // Crossfade functionality (if supported)
-    function setupCrossfade() {
-      if (appState.audio && appState.audio.crossOrigin !== undefined) {
-        // Enable crossfade if supported by browser and audio source
-        appState.crossfadeEnabled = true;
+    // Performance optimization: Debounce scroll events
+    let scrollTimeout;
+    document.addEventListener('scroll', () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        // Handle scroll events if needed
+      }, 100);
+    }, { passive: true });
+
+    // Initialize the app with default content
+    setTimeout(() => {
+      if (appState.songs.length === 0) {
+        loadDefaultContent();
       }
-    }
-
-    // Analytics and usage tracking (privacy-friendly)
-    function trackUsage(event, data = {}) {
-      // Store usage patterns locally for better recommendations
-      const usage = JSON.parse(localStorage.getItem('music_usage') || '[]');
-      usage.push({
-        event,
-        data,
-        timestamp: Date.now(),
-        language: appState.currentLanguage
-      });
-      
-      // Keep only last 1000 events
-      const recentUsage = usage.slice(-1000);
-      localStorage.setItem('music_usage', JSON.stringify(recentUsage));
-    }
-
-    // Enhanced song recommendations based on usage
-    function getPersonalizedRecommendations() {
-      const usage = JSON.parse(localStorage.getItem('music_usage') || '[]');
-      const recentSongs = usage
-        .filter(u => u.event === 'song_played')
-        .slice(-50)
-        .map(u => u.data.songId);
-      
-      // Use this data to influence song suggestions
-      return recentSongs;
-    }
-
-    // Offline support indicators
-    function updateOfflineStatus() {
-      const isOnline = navigator.onLine;
-      document.body.classList.toggle('offline', !isOnline);
-      
-      if (!isOnline) {
-        // Show offline indicator
-        console.log('App is offline - some features may be limited');
-      }
-    }
-
-    window.addEventListener('online', updateOfflineStatus);
-    window.addEventListener('offline', updateOfflineStatus);
-
-    // Export functions for external use
-    window.musicApp = {
-      switchView,
-      playSong,
-      addToQueue,
-      clearQueue,
-      getState: () => appState,
-      loadContent,
-      globalSearch
-    };
+    }, 100);
   </script>
 </body>
 </html>
