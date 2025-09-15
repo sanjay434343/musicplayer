@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Tamil Music - Spotify</title>
+  <title>Tamil Music - Spotify Clone</title>
   <style>
     * {
       margin: 0;
@@ -117,6 +117,34 @@
       font-size: 16px;
     }
     
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+    
+    .toggle-btn {
+      background: #242424;
+      border: 1px solid #404040;
+      border-radius: 8px;
+      padding: 8px 16px;
+      color: #b3b3b3;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .toggle-btn.active {
+      background: #1db954;
+      color: #000000;
+      border-color: #1db954;
+    }
+    
+    .toggle-btn:hover {
+      color: #ffffff;
+    }
+    
     /* Main Content */
     .main-content {
       flex: 1;
@@ -167,13 +195,26 @@
       color: #ffffff;
     }
     
+    .sidebar-section {
+      border-bottom: 1px solid #282828;
+      margin-bottom: 16px;
+    }
+    
+    .sidebar-section-title {
+      padding: 16px 24px 8px;
+      color: #b3b3b3;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
     /* Main View */
     .main-view {
       flex: 1;
       background: linear-gradient(180deg, #1e3264 0%, #121212 300px);
       overflow-y: auto;
       padding: 24px;
-      padding-bottom: 120px; /* Space for bottom player */
+      padding-bottom: 120px;
     }
     
     .playlist-header {
@@ -224,7 +265,7 @@
       background: #1ed760;
     }
     
-    .shuffle-btn {
+    .shuffle-btn, .suggestions-btn {
       background: none;
       border: 2px solid #b3b3b3;
       border-radius: 24px;
@@ -236,9 +277,55 @@
       transition: all 0.2s;
     }
     
-    .shuffle-btn:hover {
+    .shuffle-btn:hover, .suggestions-btn:hover {
       border-color: #ffffff;
       color: #ffffff;
+    }
+    
+    /* Content Grid */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .card {
+      background: #181818;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .card:hover {
+      background: #282828;
+    }
+    
+    .card-image {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 16px;
+      background: #282828;
+    }
+    
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .card-subtitle {
+      font-size: 14px;
+      color: #b3b3b3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     /* Songs Table */
@@ -382,6 +469,31 @@
       cursor: not-allowed;
     }
     
+    /* Section Headers */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    
+    .section-link {
+      color: #b3b3b3;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+    
+    .section-link:hover {
+      color: #ffffff;
+    }
+    
     /* Bottom Player */
     .bottom-player {
       position: fixed;
@@ -451,6 +563,10 @@
     
     .like-btn:hover {
       color: #ffffff;
+    }
+    
+    .like-btn.liked {
+      color: #1db954;
     }
     
     .player-controls {
@@ -526,7 +642,7 @@
       height: 100%;
       background: #ffffff;
       border-radius: 2px;
-      width: 30%;
+      width: 0%;
       transition: width 0.1s;
     }
     
@@ -551,6 +667,14 @@
       background: #4f4f4f;
       border-radius: 2px;
       cursor: pointer;
+      position: relative;
+    }
+    
+    .volume-filled {
+      height: 100%;
+      background: #ffffff;
+      border-radius: 2px;
+      width: 75%;
     }
     
     .loading {
@@ -608,6 +732,11 @@
       .playlist-title {
         font-size: 32px;
       }
+      
+      .content-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+      }
     }
     
     /* Scrollbar */
@@ -626,6 +755,11 @@
     
     ::-webkit-scrollbar-thumb:hover {
       background: #444444;
+    }
+    
+    /* Hidden */
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -656,6 +790,13 @@
       <span class="search-icon">🔍</span>
       <input type="text" class="search-input" id="searchInput" placeholder="Search for songs, artists, or albums">
     </div>
+    
+    <div class="view-toggle">
+      <button class="toggle-btn active" id="songsToggle" onclick="switchView('songs')">Songs</button>
+      <button class="toggle-btn" id="albumsToggle" onclick="switchView('albums')">Albums</button>
+      <button class="toggle-btn" id="artistsToggle" onclick="switchView('artists')">Artists</button>
+      <button class="toggle-btn" id="playlistsToggle" onclick="switchView('playlists')">Playlists</button>
+    </div>
   </nav>
 
   <!-- Main Content -->
@@ -666,45 +807,94 @@
         <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_CMYK_White.png" alt="Spotify" class="logo">
       </div>
       <nav class="sidebar-nav">
-        <div class="sidebar-item active">
-          <span>🏠</span> Home
+        <div class="sidebar-section">
+          <div class="sidebar-item active" onclick="switchView('songs')">
+            <span>🏠</span> Home
+          </div>
+          <div class="sidebar-item" onclick="switchView('search')">
+            <span>🔍</span> Search
+          </div>
+          <div class="sidebar-item" onclick="showLibrary()">
+            <span>📚</span> Your Library
+          </div>
         </div>
-        <div class="sidebar-item">
-          <span>🔍</span> Search
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Recently Played</div>
+          <div id="recentlyPlayedList"></div>
         </div>
-        <div class="sidebar-item">
-          <span>📚</span> Your Library
+        
+        <div class="sidebar-section">
+          <div class="sidebar-section-title">Liked Songs</div>
+          <div id="likedSongsList"></div>
         </div>
       </nav>
     </div>
 
     <!-- Main View -->
     <div class="main-view" id="mainView">
-      <div class="playlist-header">
-        <div class="playlist-info">
-          <h1 class="playlist-title" id="playlistTitle">Tamil Songs</h1>
-          <div class="playlist-meta">
-            <span id="songsCount">Loading...</span> songs • Made for you
+      <!-- Songs View -->
+      <div id="songsView" class="view-content">
+        <div class="playlist-header">
+          <div class="playlist-info">
+            <h1 class="playlist-title" id="playlistTitle">Tamil Songs</h1>
+            <div class="playlist-meta">
+              <span id="songsCount">Loading...</span> songs • Made for you
+            </div>
+          </div>
+          <div class="playlist-actions">
+            <button class="play-all-btn" onclick="playAll()" title="Play all">▶</button>
+            <button class="shuffle-btn" onclick="shuffleAll()">Shuffle play</button>
+            <button class="suggestions-btn" onclick="loadSuggestions()">Get Suggestions</button>
           </div>
         </div>
-        <div class="playlist-actions">
-          <button class="play-all-btn" onclick="playAll()" title="Play all">▶</button>
-          <button class="shuffle-btn" onclick="shuffleAll()">Shuffle play</button>
+
+        <div class="songs-table">
+          <div class="songs-header">
+            <span>#</span>
+            <span>Title</span>
+            <span>Album</span>
+            <span>⏱</span>
+          </div>
+          <div id="songsList"></div>
+        </div>
+        
+        <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+          <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreSongs()">Load More Songs</button>
         </div>
       </div>
 
-      <div class="songs-table">
-        <div class="songs-header">
-          <span>#</span>
-          <span>Title</span>
-          <span>Album</span>
-          <span>⏱</span>
+      <!-- Albums View -->
+      <div id="albumsView" class="view-content hidden">
+        <div class="section-header">
+          <h2 class="section-title" id="albumsTitle">Popular Albums</h2>
         </div>
-        <div id="songsList"></div>
+        <div class="content-grid" id="albumsGrid"></div>
+        <div class="load-more-container" id="loadMoreAlbumsContainer" style="display: none;">
+          <button class="load-more-btn" id="loadMoreAlbumsBtn" onclick="loadMoreAlbums()">Load More Albums</button>
+        </div>
       </div>
-      
-      <div class="load-more-container" id="loadMoreContainer" style="display: none;">
-        <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreSongs()">Load More Songs</button>
+
+      <!-- Artists View -->
+      <div id="artistsView" class="view-content hidden">
+        <div class="section-header">
+          <h2 class="section-title" id="artistsTitle">Popular Artists</h2>
+        </div>
+        <div class="content-grid" id="artistsGrid"></div>
+        <div class="load-more-container" id="loadMoreArtistsContainer" style="display: none;">
+          <button class="load-more-btn" id="loadMoreArtistsBtn" onclick="loadMoreArtists()">Load More Artists</button>
+        </div>
+      </div>
+
+      <!-- Playlists View -->
+      <div id="playlistsView" class="view-content hidden">
+        <div class="section-header">
+          <h2 class="section-title" id="playlistsTitle">Popular Playlists</h2>
+        </div>
+        <div class="content-grid" id="playlistsGrid"></div>
+        <div class="load-more-container" id="loadMorePlaylistsContainer" style="display: none;">
+          <button class="load-more-btn" id="loadMorePlaylistsBtn" onclick="loadMorePlaylists()">Load More Playlists</button>
+        </div>
       </div>
     </div>
   </div>
@@ -717,16 +907,16 @@
         <div class="now-playing-name" id="nowPlayingName">Select a song</div>
         <div class="now-playing-artist" id="nowPlayingArtist">Artist</div>
       </div>
-      <button class="like-btn" title="Add to Liked Songs">♡</button>
+      <button class="like-btn" id="likeBtn" onclick="toggleLike()" title="Add to Liked Songs">♡</button>
     </div>
 
     <div class="player-controls">
       <div class="control-buttons">
-        <button class="control-btn" onclick="shuffle()" title="Shuffle">🔀</button>
+        <button class="control-btn" onclick="toggleShuffle()" title="Shuffle" id="shuffleBtn">🔀</button>
         <button class="control-btn" onclick="prevSong()" title="Previous">⏮</button>
         <button class="control-btn play-pause-btn" id="playPauseBtn" onclick="togglePlay()">▶</button>
         <button class="control-btn" onclick="nextSong()" title="Next">⏭</button>
-        <button class="control-btn" onclick="repeat()" title="Repeat">🔁</button>
+        <button class="control-btn" onclick="toggleRepeat()" title="Repeat" id="repeatBtn">🔁</button>
       </div>
       <div class="progress-bar">
         <span class="time-display" id="currentTime">0:00</span>
@@ -738,279 +928,507 @@
     </div>
 
     <div class="volume-controls">
-      <button class="volume-btn">🔊</button>
-      <div class="volume-slider"></div>
+      <button class="volume-btn" onclick="toggleMute()">🔊</button>
+      <div class="volume-slider" onclick="setVolume(event)">
+        <div class="volume-filled" id="volumeFilled"></div>
+      </div>
     </div>
   </div>
 
   <audio id="audioPlayer" style="display: none;"></audio>
 
   <script>
-    const API_URL = "https://jiosavan-api-with-playlist.vercel.app/api/search/songs?query=";
+    const BASE_API_URL = "https://jiosavan-api-with-playlist.vercel.app/api";
     
-    let songs = [];
-    let displayedSongs = [];
-    let currentIdx = 0;
-    let isPlaying = false;
-    let audio = null;
-    let currentLanguage = 'tamil';
-    let songsPerPage = 1000;
-    let currentPage = 0;
-    let isLoading = false;
-
-    const songsListDiv = document.getElementById("songsList");
-    const searchInput = document.getElementById("searchInput");
-    const languageSelect = document.getElementById("languageSelect");
-    const bottomPlayer = document.getElementById("bottomPlayer");
-    const nowPlayingCover = document.getElementById("nowPlayingCover");
-    const nowPlayingName = document.getElementById("nowPlayingName");
-    const nowPlayingArtist = document.getElementById("nowPlayingArtist");
-    const playPauseBtn = document.getElementById("playPauseBtn");
-    const currentTime = document.getElementById("currentTime");
-    const totalTime = document.getElementById("totalTime");
-    const progressFilled = document.getElementById("progressFilled");
-    const songsCount = document.getElementById("songsCount");
-    const playlistTitle = document.getElementById("playlistTitle");
-    const loadMoreContainer = document.getElementById("loadMoreContainer");
-    const loadMoreBtn = document.getElementById("loadMoreBtn");
-
-    // Language change handler
-    languageSelect.addEventListener('change', function() {
-      currentLanguage = this.value;
-      const languageName = this.options[this.selectedIndex].text;
-      playlistTitle.textContent = `${languageName} Songs`;
-      resetAndFetchSongs();
-    });
-
-    // Search handler
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        if (this.value.trim()) {
-          resetAndFetchSongs(this.value.trim());
-        } else {
-          resetAndFetchSongs();
-        }
-      }, 500);
-    });
-
-    function resetAndFetchSongs(query) {
-      songs = [];
-      displayedSongs = [];
-      currentPage = 0;
-      songsListDiv.innerHTML = '';
-      loadMoreContainer.style.display = 'none';
-      fetchSongs(query);
-    }
-
-    function fetchSongs(query, append = false) {
-      if (isLoading) return;
-      isLoading = true;
-
-      if (!append) {
-        songsListDiv.innerHTML = `
-          <div class="loading">
-            <div class="loading-spinner"></div>
-            <div>Loading ${currentLanguage} songs...</div>
-          </div>
-        `;
-      } else {
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.textContent = 'Loading...';
+    // App State
+    let appState = {
+      songs: [],
+      albums: [],
+      artists: [],
+      playlists: [],
+      currentView: 'songs',
+      currentIdx: 0,
+      isPlaying: false,
+      audio: null,
+      currentLanguage: 'tamil',
+      isShuffled: false,
+      repeatMode: 0, // 0: off, 1: all, 2: one
+      volume: 0.75,
+      isMuted: false,
+      queue: [],
+      originalQueue: [],
+      searchQuery: '',
+      currentPage: {
+        songs: 0,
+        albums: 0,
+        artists: 0,
+        playlists: 0
       }
+    };
 
-      const searchQuery = query || getRandomQueries();
-      
-      fetch(`${API_URL}${encodeURIComponent(searchQuery)}&limit=100`)
-        .then(res => res.json())
-        .then(json => {
-          const newSongs = (json.data.results || []).filter(
-            s => s.language && s.language.toLowerCase() === currentLanguage.toLowerCase()
-          ) || [];
+    // Local Storage Keys
+    const STORAGE_KEYS = {
+      LIKED_SONGS: 'spotify_liked_songs',
+      RECENT_SONGS: 'spotify_recent_songs',
+      VOLUME: 'spotify_volume',
+      REPEAT_MODE: 'spotify_repeat_mode',
+      SHUFFLE: 'spotify_shuffle',
+      LANGUAGE: 'spotify_language',
+      LAST_PLAYED: 'spotify_last_played'
+    };
 
-          if (append) {
-            // Add new unique songs
-            newSongs.forEach(newSong => {
-              const exists = songs.some(existingSong => existingSong.id === newSong.id);
-              if (!exists) {
-                songs.push(newSong);
-              }
-            });
-          } else {
-            songs = newSongs;
-          }
+    // DOM Elements
+    const elements = {
+      searchInput: document.getElementById("searchInput"),
+      languageSelect: document.getElementById("languageSelect"),
+      bottomPlayer: document.getElementById("bottomPlayer"),
+      nowPlayingCover: document.getElementById("nowPlayingCover"),
+      nowPlayingName: document.getElementById("nowPlayingName"),
+      nowPlayingArtist: document.getElementById("nowPlayingArtist"),
+      playPauseBtn: document.getElementById("playPauseBtn"),
+      currentTime: document.getElementById("currentTime"),
+      totalTime: document.getElementById("totalTime"),
+      progressFilled: document.getElementById("progressFilled"),
+      volumeFilled: document.getElementById("volumeFilled"),
+      songsCount: document.getElementById("songsCount"),
+      playlistTitle: document.getElementById("playlistTitle"),
+      likeBtn: document.getElementById("likeBtn"),
+      shuffleBtn: document.getElementById("shuffleBtn"),
+      repeatBtn: document.getElementById("repeatBtn"),
+      songsList: document.getElementById("songsList"),
+      albumsGrid: document.getElementById("albumsGrid"),
+      artistsGrid: document.getElementById("artistsGrid"),
+      playlistsGrid: document.getElementById("playlistsGrid"),
+      recentlyPlayedList: document.getElementById("recentlyPlayedList"),
+      likedSongsList: document.getElementById("likedSongsList")
+    };
 
-          // If we don't have enough songs, fetch more with different queries
-          if (songs.length < 100 && !query) {
-            fetchMoreFromDifferentSources();
-          } else {
-            displaySongs();
-          }
+    // Initialize app
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeApp();
+    });
 
-          isLoading = false;
-        })
-        .catch(error => {
-          console.error('Error fetching songs:', error);
-          if (!append) {
-            songsListDiv.innerHTML = '<div class="error">Failed to load songs. Please try again.</div>';
-          }
-          isLoading = false;
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.textContent = 'Load More Songs';
-        });
+    function initializeApp() {
+      loadFromLocalStorage();
+      setupEventListeners();
+      loadContent();
     }
 
-    function fetchMoreFromDifferentSources() {
-      const additionalQueries = getAdditionalQueries();
-      let fetchCount = 0;
-      
-      additionalQueries.forEach((query, index) => {
-        setTimeout(() => {
-          fetch(`${API_URL}${encodeURIComponent(query)}&limit=50`)
-            .then(res => res.json())
-            .then(json => {
-              const newSongs = (json.data.results || []).filter(
-                s => s.language && s.language.toLowerCase() === currentLanguage.toLowerCase()
-              ) || [];
+    // Local Storage Functions
+    function saveToLocalStorage(key, data) {
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch (error) {
+        console.error('Failed to save to localStorage:', error);
+      }
+    }
 
-              newSongs.forEach(newSong => {
-                const exists = songs.some(existingSong => existingSong.id === newSong.id);
-                if (!exists) {
-                  songs.push(newSong);
-                }
-              });
+    function loadFromLocalStorage() {
+      try {
+        // Load liked songs
+        const likedSongs = JSON.parse(localStorage.getItem(STORAGE_KEYS.LIKED_SONGS)) || [];
+        appState.likedSongs = likedSongs;
 
-              fetchCount++;
-              if (fetchCount === additionalQueries.length) {
-                displaySongs();
-              }
-            })
-            .catch(console.error);
-        }, index * 200); // Stagger requests
+        // Load recent songs
+        const recentSongs = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_SONGS)) || [];
+        appState.recentSongs = recentSongs;
+
+        // Load settings
+        appState.volume = parseFloat(localStorage.getItem(STORAGE_KEYS.VOLUME)) || 0.75;
+        appState.repeatMode = parseInt(localStorage.getItem(STORAGE_KEYS.REPEAT_MODE)) || 0;
+        appState.isShuffled = JSON.parse(localStorage.getItem(STORAGE_KEYS.SHUFFLE)) || false;
+        appState.currentLanguage = localStorage.getItem(STORAGE_KEYS.LANGUAGE) || 'tamil';
+
+        // Apply settings
+        elements.languageSelect.value = appState.currentLanguage;
+        elements.volumeFilled.style.width = (appState.volume * 100) + '%';
+        updateShuffleButton();
+        updateRepeatButton();
+
+        // Load last played song
+        const lastPlayed = JSON.parse(localStorage.getItem(STORAGE_KEYS.LAST_PLAYED));
+        if (lastPlayed) {
+          setupBottomPlayer(lastPlayed, false);
+        }
+
+        updateSidebar();
+      } catch (error) {
+        console.error('Failed to load from localStorage:', error);
+      }
+    }
+
+    function setupEventListeners() {
+      // Language change
+      elements.languageSelect.addEventListener('change', function() {
+        appState.currentLanguage = this.value;
+        saveToLocalStorage(STORAGE_KEYS.LANGUAGE, appState.currentLanguage);
+        elements.playlistTitle.textContent = `${this.options[this.selectedIndex].text} Songs`;
+        resetAndLoadContent();
+      });
+
+      // Search
+      let searchTimeout;
+      elements.searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        appState.searchQuery = this.value.trim();
+        searchTimeout = setTimeout(() => {
+          resetAndLoadContent();
+        }, 500);
       });
     }
 
-    function getRandomQueries() {
-      const queries = {
-        tamil: ['tamil hits', 'tamil melody', 'ar rahman tamil', 'tamil classical', 'ilaiyaraaja'],
-        hindi: ['bollywood hits', 'hindi romantic', 'hindi classical', 'arijit singh', 'kishore kumar'],
-        telugu: ['telugu hits', 'telugu melody', 'ss thaman telugu', 'telugu classical', 'spb telugu'],
-        malayalam: ['malayalam hits', 'malayalam melody', 'malayalam classical', 'yesudas malayalam'],
-        kannada: ['kannada hits', 'kannada melody', 'kannada classical', 'spb kannada'],
-        bengali: ['bengali hits', 'rabindra sangeet', 'bengali modern', 'bengali classical'],
-        punjabi: ['punjabi hits', 'punjabi bhangra', 'punjabi romantic', 'gurdas maan'],
-        marathi: ['marathi hits', 'marathi classical', 'marathi folk', 'marathi devotional'],
-        gujarati: ['gujarati hits', 'gujarati folk', 'gujarati bhajan', 'gujarati garba'],
-        english: ['pop hits', 'rock classics', 'english romantic', 'billboard hits']
-      };
-
-      const langQueries = queries[currentLanguage] || queries.tamil;
-      return langQueries[Math.floor(Math.random() * langQueries.length)];
+    function resetAndLoadContent() {
+      appState.currentPage = { songs: 0, albums: 0, artists: 0, playlists: 0 };
+      appState.songs = [];
+      appState.albums = [];
+      appState.artists = [];
+      appState.playlists = [];
+      loadContent();
     }
 
-    function getAdditionalQueries() {
-      const additionalQueries = {
-        tamil: ['vijay songs tamil', 'ajith songs tamil', 'tamil duet songs', 'tamil sad songs'],
-        hindi: ['shah rukh khan songs', 'hindi party songs', 'hindi sad songs', '90s bollywood'],
-        telugu: ['mahesh babu songs', 'prabhas songs', 'telugu item songs', 'telugu devotional'],
-        malayalam: ['mohanlal songs', 'mammootty songs', 'malayalam romantic', 'malayalam folk'],
-        kannada: ['rajkumar songs', 'kannada romantic', 'kannada devotional', 'kannada folk'],
-        bengali: ['bengali romantic', 'bengali devotional', 'adhunik bengali', 'bengali folk'],
-        punjabi: ['diljit dosanjh', 'punjabi sad songs', 'punjabi dance', 'punjabi folk'],
-        marathi: ['marathi romantic', 'marathi qawwali', 'marathi lavani', 'marathi abhang'],
-        gujarati: ['gujarati romantic', 'gujarati devotional', 'gujarati lok geet', 'gujarati thumri'],
-        english: ['english dance', 'english ballads', 'english rock', 'english country']
-      };
-
-      return additionalQueries[currentLanguage] || additionalQueries.tamil;
-    }
-
-    function displaySongs() {
-      const startIndex = currentPage * songsPerPage;
-      const endIndex = Math.min(startIndex + songsPerPage, songs.length);
-      const songsToShow = songs.slice(startIndex, endIndex);
-
-      if (currentPage === 0) {
-        displayedSongs = [...songsToShow];
-        songsListDiv.innerHTML = "";
-      } else {
-        displayedSongs = [...displayedSongs, ...songsToShow];
+    function loadContent() {
+      switch (appState.currentView) {
+        case 'songs':
+          loadSongs();
+          break;
+        case 'albums':
+          loadAlbums();
+          break;
+        case 'artists':
+          loadArtists();
+          break;
+        case 'playlists':
+          loadPlaylists();
+          break;
       }
+    }
 
-      songsToShow.forEach((song, idx) => {
-        const globalIndex = startIndex + idx;
+    // API Functions
+    async function loadSongs(append = false) {
+      try {
+        if (!append) elements.songsList.innerHTML = createLoadingHTML();
+        
+        const query = appState.searchQuery || getRandomQuery('songs');
+        const url = `${BASE_API_URL}/search/songs?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.songs}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data.results) {
+          const newSongs = data.data.results.filter(song => 
+            song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+          );
+          
+          if (append) {
+            appState.songs = [...appState.songs, ...newSongs];
+          } else {
+            appState.songs = newSongs;
+          }
+          
+          displaySongs();
+          appState.currentPage.songs++;
+        }
+      } catch (error) {
+        console.error('Error loading songs:', error);
+        elements.songsList.innerHTML = '<div class="error">Failed to load songs</div>';
+      }
+    }
+
+    async function loadAlbums(append = false) {
+      try {
+        if (!append) elements.albumsGrid.innerHTML = createLoadingHTML();
+        
+        const query = appState.searchQuery || getRandomQuery('albums');
+        const url = `${BASE_API_URL}/search/albums?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.albums}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data.results) {
+          const newAlbums = data.data.results.filter(album => 
+            album.language && album.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+          );
+          
+          if (append) {
+            appState.albums = [...appState.albums, ...newAlbums];
+          } else {
+            appState.albums = newAlbums;
+          }
+          
+          displayAlbums();
+          appState.currentPage.albums++;
+        }
+      } catch (error) {
+        console.error('Error loading albums:', error);
+        elements.albumsGrid.innerHTML = '<div class="error">Failed to load albums</div>';
+      }
+    }
+
+    async function loadArtists(append = false) {
+      try {
+        if (!append) elements.artistsGrid.innerHTML = createLoadingHTML();
+        
+        const query = appState.searchQuery || getRandomQuery('artists');
+        const url = `${BASE_API_URL}/search/artists?query=${encodeURIComponent(query)}&limit=200&page=${appState.currentPage.artists}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data.results) {
+          const newArtists = data.data.results;
+          
+          if (append) {
+            appState.artists = [...appState.artists, ...newArtists];
+          } else {
+            appState.artists = newArtists;
+          }
+          
+          displayArtists();
+          appState.currentPage.artists++;
+        }
+      } catch (error) {
+        console.error('Error loading artists:', error);
+        elements.artistsGrid.innerHTML = '<div class="error">Failed to load artists</div>';
+      }
+    }
+
+    async function loadPlaylists(append = false) {
+      try {
+        if (!append) elements.playlistsGrid.innerHTML = createLoadingHTML();
+        
+        const query = appState.searchQuery || getRandomQuery('playlists');
+        const url = `${BASE_API_URL}/search/playlists?query=${encodeURIComponent(query)}&limit=500&page=${appState.currentPage.playlists}`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data.results) {
+          const newPlaylists = data.data.results.filter(playlist => 
+            playlist.language && playlist.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+          );
+          
+          if (append) {
+            appState.playlists = [...appState.playlists, ...newPlaylists];
+          } else {
+            appState.playlists = newPlaylists;
+          }
+          
+          displayPlaylists();
+          appState.currentPage.playlists++;
+        }
+      } catch (error) {
+        console.error('Error loading playlists:', error);
+        elements.playlistsGrid.innerHTML = '<div class="error">Failed to load playlists</div>';
+      }
+    }
+
+    async function loadSuggestions() {
+      if (!appState.songs.length || appState.currentIdx >= appState.songs.length) return;
+      
+      try {
+        const currentSong = appState.songs[appState.currentIdx];
+        const url = `${BASE_API_URL}/songs/${currentSong.id}/suggestions?limit=20`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          const suggestions = data.data.filter(song => 
+            song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+          );
+          
+          // Add unique suggestions to the current songs list
+          suggestions.forEach(suggestion => {
+            if (!appState.songs.some(song => song.id === suggestion.id)) {
+              appState.songs.push(suggestion);
+            }
+          });
+          
+          displaySongs();
+        }
+      } catch (error) {
+        console.error('Error loading suggestions:', error);
+      }
+    }
+
+    // Display Functions
+    function displaySongs() {
+      elements.songsList.innerHTML = "";
+      elements.songsCount.textContent = appState.songs.length;
+      
+      appState.songs.forEach((song, idx) => {
         const songRow = document.createElement("div");
-        songRow.className = "song-row" + (globalIndex === currentIdx && isPlaying ? " active playing" : "");
-        songRow.onclick = () => playSong(globalIndex);
+        songRow.className = "song-row" + (idx === appState.currentIdx && appState.isPlaying ? " active playing" : "");
+        songRow.onclick = () => playSong(idx);
         
         songRow.innerHTML = `
-          <div class="song-index">${globalIndex + 1}<span class="play-icon">▶</span></div>
+          <div class="song-index">${idx + 1}<span class="play-icon">▶</span></div>
           <div class="song-info">
-            <img class="song-cover-small" src="${getImg(song, '150x150')}" alt="" onerror="this.style.display='none'">
+            <img class="song-cover-small" src="${getImg(song.image, '150x150')}" alt="" onerror="this.style.display='none'">
             <div class="song-details">
               <div class="song-name">${song.name}</div>
               <div class="song-artist">${song.artists.primary.map(a => a.name).join(", ")}</div>
             </div>
           </div>
-          <div class="song-album">${song.album.name}</div>
+          <div class="song-album">${song.album?.name || 'Unknown Album'}</div>
           <div class="song-duration">${formatDuration(song.duration)}</div>
         `;
         
-        songsListDiv.appendChild(songRow);
+        elements.songsList.appendChild(songRow);
       });
 
-      // Update counts and show/hide load more button
-      songsCount.textContent = displayedSongs.length;
+      updateLoadMoreButton('songs');
+    }
+
+    function displayAlbums() {
+      elements.albumsGrid.innerHTML = "";
       
-      if (songs.length > displayedSongs.length) {
-        loadMoreContainer.style.display = 'flex';
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load More Songs';
-      } else if (songs.length < 100) {
-        loadMoreContainer.style.display = 'flex';
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load More Songs';
-      } else {
-        loadMoreContainer.style.display = 'none';
-      }
+      appState.albums.forEach(album => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => loadAlbumSongs(album.id);
+        
+        card.innerHTML = `
+          <img class="card-image" src="${getImg(album.image, '500x500')}" alt="${album.name}">
+          <div class="card-title">${album.name}</div>
+          <div class="card-subtitle">${album.artists.primary.map(a => a.name).join(", ")}</div>
+        `;
+        
+        elements.albumsGrid.appendChild(card);
+      });
+
+      updateLoadMoreButton('albums');
     }
 
-    function loadMoreSongs() {
-      if (displayedSongs.length < songs.length) {
-        // Show more from existing songs
-        currentPage++;
-        displaySongs();
-      } else {
-        // Fetch more songs
-        fetchSongs(null, true);
-      }
+    function displayArtists() {
+      elements.artistsGrid.innerHTML = "";
+      
+      appState.artists.forEach(artist => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => loadArtistSongs(artist.id);
+        
+        card.innerHTML = `
+          <img class="card-image" src="${getImg(artist.image, '500x500')}" alt="${artist.name}" style="border-radius: 50%;">
+          <div class="card-title">${artist.name}</div>
+          <div class="card-subtitle">Artist</div>
+        `;
+        
+        elements.artistsGrid.appendChild(card);
+      });
+
+      updateLoadMoreButton('artists');
     }
 
+    function displayPlaylists() {
+      elements.playlistsGrid.innerHTML = "";
+      
+      appState.playlists.forEach(playlist => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => loadPlaylistSongs(playlist.id);
+        
+        card.innerHTML = `
+          <img class="card-image" src="${getImg(playlist.image, '500x500')}" alt="${playlist.name}">
+          <div class="card-title">${playlist.name}</div>
+          <div class="card-subtitle">${playlist.songCount || 0} songs</div>
+        `;
+        
+        elements.playlistsGrid.appendChild(card);
+      });
+
+      updateLoadMoreButton('playlists');
+    }
+
+    function updateSidebar() {
+      // Update recently played
+      elements.recentlyPlayedList.innerHTML = "";
+      (appState.recentSongs || []).slice(0, 5).forEach(song => {
+        const item = document.createElement("div");
+        item.className = "sidebar-item";
+        item.innerHTML = `<span>🎵</span> ${song.name}`;
+        item.onclick = () => {
+          const songIndex = appState.songs.findIndex(s => s.id === song.id);
+          if (songIndex !== -1) playSong(songIndex);
+        };
+        elements.recentlyPlayedList.appendChild(item);
+      });
+
+      // Update liked songs
+      elements.likedSongsList.innerHTML = "";
+      (appState.likedSongs || []).slice(0, 5).forEach(song => {
+        const item = document.createElement("div");
+        item.className = "sidebar-item";
+        item.innerHTML = `<span>💚</span> ${song.name}`;
+        item.onclick = () => {
+          const songIndex = appState.songs.findIndex(s => s.id === song.id);
+          if (songIndex !== -1) playSong(songIndex);
+        };
+        elements.likedSongsList.appendChild(item);
+      });
+    }
+
+    // Music Player Functions
     function playSong(idx) {
-      currentIdx = idx;
-      isPlaying = true;
+      appState.currentIdx = idx;
+      appState.isPlaying = true;
       
-      const song = songs[currentIdx];
+      const song = appState.songs[appState.currentIdx];
+      if (!song) return;
       
-      // Update bottom player
-      bottomPlayer.style.display = 'grid';
-      nowPlayingCover.src = getImg(song, '500x500');
-      nowPlayingName.textContent = song.name;
-      nowPlayingArtist.textContent = song.artists.primary.map(a => a.name).join(", ");
-      playPauseBtn.innerHTML = '⏸';
+      // Add to recent songs
+      addToRecent(song);
       
-      // Update songs list
-      updateActiveSong();
-      
-      // Setup audio
+      setupBottomPlayer(song, true);
       setupAudioPlayer(song);
+      updateActiveSong();
+    }
+
+    function setupBottomPlayer(song, shouldPlay = false) {
+      elements.bottomPlayer.style.display = 'grid';
+      elements.nowPlayingCover.src = getImg(song.image, '500x500');
+      elements.nowPlayingName.textContent = song.name;
+      elements.nowPlayingArtist.textContent = song.artists.primary.map(a => a.name).join(", ");
+      elements.playPauseBtn.innerHTML = shouldPlay ? '⏸' : '▶';
+      
+      // Update like button
+      const isLiked = appState.likedSongs.some(likedSong => likedSong.id === song.id);
+      elements.likeBtn.innerHTML = isLiked ? '💚' : '♡';
+      elements.likeBtn.classList.toggle('liked', isLiked);
+      
+      // Save last played
+      saveToLocalStorage(STORAGE_KEYS.LAST_PLAYED, song);
+    }
+
+    function setupAudioPlayer(song) {
+      appState.audio = document.getElementById("audioPlayer");
+      if (!appState.audio || !song.downloadUrl) return;
+      
+      let url = "";
+      if (Array.isArray(song.downloadUrl)) {
+        const high = song.downloadUrl.find(d => d.quality === "320kbps");
+        url = high ? high.url : song.downloadUrl[song.downloadUrl.length - 1]?.url;
+      }
+      
+      if (url) {
+        appState.audio.src = url;
+        appState.audio.volume = appState.isMuted ? 0 : appState.volume;
+        appState.audio.onended = handleSongEnd;
+        appState.audio.ontimeupdate = updateProgress;
+        appState.audio.onloadedmetadata = () => {
+          elements.totalTime.textContent = formatDuration(Math.floor(appState.audio.duration));
+        };
+        
+        if (appState.isPlaying) {
+          appState.audio.play().catch(console.error);
+        }
+      }
     }
 
     function updateActiveSong() {
       const songRows = document.querySelectorAll('.song-row');
       songRows.forEach((row, idx) => {
-        if (idx === currentIdx && isPlaying) {
+        if (idx === appState.currentIdx && appState.isPlaying) {
           row.classList.add('active', 'playing');
         } else {
           row.classList.remove('active', 'playing');
@@ -1018,41 +1436,17 @@
       });
     }
 
-    function setupAudioPlayer(song) {
-      audio = document.getElementById("audioPlayer");
-      if (!audio) return;
-      
-      let url = "";
-      if (song.downloadUrl && Array.isArray(song.downloadUrl)) {
-        let high = song.downloadUrl.find(d => d.quality === "320kbps");
-        url = high ? high.url : song.downloadUrl[song.downloadUrl.length - 1]?.url;
-      }
-      
-      if (url) {
-        audio.src = url;
-        audio.onended = nextSong;
-        audio.ontimeupdate = updateProgress;
-        audio.onloadedmetadata = () => {
-          totalTime.textContent = formatDuration(Math.floor(audio.duration));
-        };
-        
-        if (isPlaying) {
-          audio.play().catch(console.error);
-        }
-      }
-    }
-
     function togglePlay() {
-      if (!songs[currentIdx]) return;
+      if (!appState.songs[appState.currentIdx]) return;
       
-      isPlaying = !isPlaying;
-      playPauseBtn.innerHTML = isPlaying ? '⏸' : '▶';
+      appState.isPlaying = !appState.isPlaying;
+      elements.playPauseBtn.innerHTML = appState.isPlaying ? '⏸' : '▶';
       
-      if (audio) {
-        if (isPlaying) {
-          audio.play().catch(console.error);
+      if (appState.audio) {
+        if (appState.isPlaying) {
+          appState.audio.play().catch(console.error);
         } else {
-          audio.pause();
+          appState.audio.pause();
         }
       }
       
@@ -1060,57 +1454,259 @@
     }
 
     function nextSong() {
-      if (!songs.length) return;
-      currentIdx = (currentIdx + 1) % songs.length;
-      playSong(currentIdx);
+      if (!appState.songs.length) return;
+      
+      if (appState.repeatMode === 2) {
+        // Repeat one - replay current song
+        playSong(appState.currentIdx);
+        return;
+      }
+      
+      if (appState.isShuffled) {
+        appState.currentIdx = Math.floor(Math.random() * appState.songs.length);
+      } else {
+        appState.currentIdx = (appState.currentIdx + 1) % appState.songs.length;
+      }
+      
+      playSong(appState.currentIdx);
     }
 
     function prevSong() {
-      if (!songs.length) return;
-      currentIdx = (currentIdx - 1 + songs.length) % songs.length;
-      playSong(currentIdx);
+      if (!appState.songs.length) return;
+      
+      if (appState.isShuffled) {
+        appState.currentIdx = Math.floor(Math.random() * appState.songs.length);
+      } else {
+        appState.currentIdx = (appState.currentIdx - 1 + appState.songs.length) % appState.songs.length;
+      }
+      
+      playSong(appState.currentIdx);
     }
 
+    function handleSongEnd() {
+      if (appState.repeatMode === 1) {
+        nextSong();
+      } else if (appState.repeatMode === 2) {
+        playSong(appState.currentIdx);
+      } else {
+        if (appState.currentIdx < appState.songs.length - 1) {
+          nextSong();
+        } else {
+          appState.isPlaying = false;
+          elements.playPauseBtn.innerHTML = '▶';
+          updateActiveSong();
+        }
+      }
+    }
+
+    // Control Functions
+    function toggleShuffle() {
+      appState.isShuffled = !appState.isShuffled;
+      saveToLocalStorage(STORAGE_KEYS.SHUFFLE, appState.isShuffled);
+      updateShuffleButton();
+    }
+
+    function toggleRepeat() {
+      appState.repeatMode = (appState.repeatMode + 1) % 3;
+      saveToLocalStorage(STORAGE_KEYS.REPEAT_MODE, appState.repeatMode);
+      updateRepeatButton();
+    }
+
+    function updateShuffleButton() {
+      elements.shuffleBtn.style.color = appState.isShuffled ? '#1db954' : '#b3b3b3';
+    }
+
+    function updateRepeatButton() {
+      const colors = ['#b3b3b3', '#1db954', '#1db954'];
+      const icons = ['🔁', '🔁', '🔂'];
+      elements.repeatBtn.style.color = colors[appState.repeatMode];
+      elements.repeatBtn.innerHTML = icons[appState.repeatMode];
+    }
+
+    function toggleLike() {
+      const currentSong = appState.songs[appState.currentIdx];
+      if (!currentSong) return;
+      
+      const likedIndex = appState.likedSongs.findIndex(song => song.id === currentSong.id);
+      
+      if (likedIndex === -1) {
+        appState.likedSongs.unshift(currentSong);
+        elements.likeBtn.innerHTML = '💚';
+        elements.likeBtn.classList.add('liked');
+      } else {
+        appState.likedSongs.splice(likedIndex, 1);
+        elements.likeBtn.innerHTML = '♡';
+        elements.likeBtn.classList.remove('liked');
+      }
+      
+      saveToLocalStorage(STORAGE_KEYS.LIKED_SONGS, appState.likedSongs);
+      updateSidebar();
+    }
+
+    function addToRecent(song) {
+      const recentIndex = appState.recentSongs.findIndex(s => s.id === song.id);
+      
+      if (recentIndex !== -1) {
+        appState.recentSongs.splice(recentIndex, 1);
+      }
+      
+      appState.recentSongs.unshift(song);
+      appState.recentSongs = appState.recentSongs.slice(0, 20);
+      
+      saveToLocalStorage(STORAGE_KEYS.RECENT_SONGS, appState.recentSongs);
+      updateSidebar();
+    }
+
+    function updateProgress() {
+      if (!appState.audio) return;
+      
+      const progress = (appState.audio.currentTime / appState.audio.duration) * 100;
+      elements.progressFilled.style.width = progress + '%';
+      elements.currentTime.textContent = formatDuration(Math.floor(appState.audio.currentTime));
+    }
+
+    function seek(event) {
+      if (!appState.audio) return;
+      
+      const rect = event.target.getBoundingClientRect();
+      const percent = (event.clientX - rect.left) / rect.width;
+      appState.audio.currentTime = percent * appState.audio.duration;
+    }
+
+    function setVolume(event) {
+      const rect = event.target.getBoundingClientRect();
+      const percent = (event.clientX - rect.left) / rect.width;
+      appState.volume = Math.max(0, Math.min(1, percent));
+      
+      elements.volumeFilled.style.width = (appState.volume * 100) + '%';
+      
+      if (appState.audio) {
+        appState.audio.volume = appState.isMuted ? 0 : appState.volume;
+      }
+      
+      saveToLocalStorage(STORAGE_KEYS.VOLUME, appState.volume);
+    }
+
+    function toggleMute() {
+      appState.isMuted = !appState.isMuted;
+      
+      if (appState.audio) {
+        appState.audio.volume = appState.isMuted ? 0 : appState.volume;
+      }
+      
+      document.querySelector('.volume-btn').innerHTML = appState.isMuted ? '🔇' : '🔊';
+    }
+
+    // View Management
+    function switchView(view) {
+      appState.currentView = view;
+      
+      // Update toggle buttons
+      document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(view + 'Toggle')?.classList.add('active');
+      
+      // Show/hide views
+      document.querySelectorAll('.view-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(view + 'View')?.classList.remove('hidden');
+      
+      // Update sidebar active state
+      document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+      
+      loadContent();
+    }
+
+    // Load More Functions
+    function loadMoreSongs() { loadSongs(true); }
+    function loadMoreAlbums() { loadAlbums(true); }
+    function loadMoreArtists() { loadArtists(true); }
+    function loadMorePlaylists() { loadPlaylists(true); }
+
+    function updateLoadMoreButton(type) {
+      const container = document.getElementById(`loadMore${type.charAt(0).toUpperCase() + type.slice(1)}Container`);
+      if (container) {
+        container.style.display = 'flex';
+      }
+    }
+
+    // Special Actions
     function playAll() {
-      if (songs.length > 0) {
+      if (appState.songs.length > 0) {
         playSong(0);
       }
     }
 
     function shuffleAll() {
-      if (songs.length > 0) {
-        // Shuffle the songs array
-        const shuffled = [...songs].sort(() => Math.random() - 0.5);
-        songs = shuffled;
-        displayedSongs = [];
-        currentPage = 0;
+      if (appState.songs.length > 0) {
+        appState.songs = [...appState.songs].sort(() => Math.random() - 0.5);
         displaySongs();
         playSong(0);
       }
     }
 
-    function updateProgress() {
-      if (!audio) return;
-      
-      const progress = (audio.currentTime / audio.duration) * 100;
-      progressFilled.style.width = progress + '%';
-      currentTime.textContent = formatDuration(Math.floor(audio.currentTime));
+    // Utility Functions
+    function getRandomQuery(type) {
+      const queries = {
+        songs: {
+          tamil: ['tamil hits', 'ar rahman tamil', 'ilaiyaraaja', 'anirudh tamil'],
+          hindi: ['bollywood hits', 'arijit singh', 'kishore kumar', 'lata mangeshkar'],
+          telugu: ['telugu hits', 'ss thaman', 'devi sri prasad', 'mm keeravani'],
+          malayalam: ['malayalam hits', 'ilaiyaraaja malayalam', 'vidyasagar', 'shaan rahman'],
+          kannada: ['kannada hits', 'hamsalekha', 'v harikrishna', 'arjun janya'],
+          bengali: ['rabindra sangeet', 'kishore kumar bengali', 'hemant kumar'],
+          punjabi: ['punjabi hits', 'gurdas maan', 'diljit dosanjh'],
+          marathi: ['marathi hits', 'ajay atul', 'shankar mahadevan marathi'],
+          gujarati: ['gujarati folk', 'gujarati bhajan', 'gujarati hits'],
+          english: ['pop hits', 'rock classics', 'billboard hits']
+        },
+        albums: {
+          tamil: ['tamil albums', 'kollywood music', 'tamil movie music'],
+          hindi: ['bollywood albums', 'hindi movie music', 'indian albums'],
+          telugu: ['tollywood music', 'telugu albums', 'telugu cinema'],
+          malayalam: ['mollywood music', 'malayalam albums'],
+          kannada: ['sandalwood music', 'kannada albums'],
+          bengali: ['bengali albums', 'bengali cinema'],
+          punjabi: ['punjabi albums', 'punjabi music'],
+          marathi: ['marathi albums', 'marathi cinema'],
+          gujarati: ['gujarati albums', 'gujarati music'],
+          english: ['english albums', 'western music']
+        },
+        artists: {
+          tamil: ['tamil singers', 'tamil composers', 'kollywood artists'],
+          hindi: ['bollywood singers', 'hindi artists', 'indian musicians'],
+          telugu: ['telugu singers', 'tollywood artists'],
+          malayalam: ['malayalam singers', 'mollywood artists'],
+          kannada: ['kannada singers', 'sandalwood artists'],
+          bengali: ['bengali singers', 'bengali artists'],
+          punjabi: ['punjabi singers', 'punjabi artists'],
+          marathi: ['marathi singers', 'marathi artists'],
+          gujarati: ['gujarati singers', 'gujarati artists'],
+          english: ['english artists', 'pop artists']
+        },
+        playlists: {
+          tamil: ['tamil playlist', 'kollywood hits', 'tamil melodies'],
+          hindi: ['bollywood playlist', 'hindi hits', 'romantic hindi'],
+          telugu: ['telugu playlist', 'tollywood hits'],
+          malayalam: ['malayalam playlist', 'mollywood hits'],
+          kannada: ['kannada playlist', 'sandalwood hits'],
+          bengali: ['bengali playlist', 'bengali hits'],
+          punjabi: ['punjabi playlist', 'punjabi hits'],
+          marathi: ['marathi playlist', 'marathi hits'],
+          gujarati: ['gujarati playlist', 'gujarati hits'],
+          english: ['english playlist', 'pop playlist']
+        }
+      };
+
+      const langQueries = queries[type][appState.currentLanguage] || queries[type]['tamil'];
+      return langQueries[Math.floor(Math.random() * langQueries.length)];
     }
 
-    function seek(event) {
-      if (!audio) return;
-      
-      const rect = event.target.getBoundingClientRect();
-      const percent = (event.clientX - rect.left) / rect.width;
-      audio.currentTime = percent * audio.duration;
-    }
-
-    function shuffle() {
-      console.log('Shuffle clicked');
-    }
-
-    function repeat() {
-      console.log('Repeat clicked');
+    function createLoadingHTML() {
+      return `
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <div>Loading...</div>
+        </div>
+      `;
     }
 
     function formatDuration(seconds) {
@@ -1120,24 +1716,346 @@
       return `${mins}:${secs}`;
     }
 
-    function getImg(song, quality) {
-      if (!song.image || !song.image.length) return "";
-      return song.image.find(img => img.quality === quality)?.url || song.image[0].url;
+    function getImg(imageArray, quality) {
+      if (!imageArray || !imageArray.length) return "";
+      return imageArray.find(img => img.quality === quality)?.url || imageArray[0].url;
     }
 
+    // Album/Artist/Playlist specific loading functions
+    async function loadAlbumSongs(albumId) {
+      try {
+        const response = await fetch(`${BASE_API_URL}/albums?ids=${albumId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data[0] && data.data[0].songs) {
+          appState.songs = data.data[0].songs;
+          switchView('songs');
+          displaySongs();
+        }
+      } catch (error) {
+        console.error('Error loading album songs:', error);
+      }
+    }
+
+    async function loadArtistSongs(artistId) {
+      try {
+        const response = await fetch(`${BASE_API_URL}/artists/${artistId}/songs?limit=50`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          appState.songs = data.data;
+          switchView('songs');
+          displaySongs();
+        }
+      } catch (error) {
+        console.error('Error loading artist songs:', error);
+      }
+    }
+
+    async function loadPlaylistSongs(playlistId) {
+      try {
+        const response = await fetch(`${BASE_API_URL}/playlists?ids=${playlistId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data[0] && data.data[0].songs) {
+          appState.songs = data.data[0].songs;
+          switchView('songs');
+          displaySongs();
+        }
+      } catch (error) {
+        console.error('Error loading playlist songs:', error);
+      }
+    }
+
+    // Initialize app state
+    appState.likedSongs = [];
+    appState.recentSongs = [];
+
     // Make functions globally available
+    window.switchView = switchView;
     window.togglePlay = togglePlay;
     window.nextSong = nextSong;
     window.prevSong = prevSong;
-    window.shuffle = shuffle;
-    window.repeat = repeat;
+    window.toggleShuffle = toggleShuffle;
+    window.toggleRepeat = toggleRepeat;
+    window.toggleLike = toggleLike;
+    window.toggleMute = toggleMute;
     window.seek = seek;
+    window.setVolume = setVolume;
     window.loadMoreSongs = loadMoreSongs;
+    window.loadMoreAlbums = loadMoreAlbums;
+    window.loadMoreArtists = loadMoreArtists;
+    window.loadMorePlaylists = loadMorePlaylists;
     window.playAll = playAll;
     window.shuffleAll = shuffleAll;
+    window.loadSuggestions = loadSuggestions;
+    window.showLibrary = showLibrary;
+    window.loadAlbumSongs = loadAlbumSongs;
+    window.loadArtistSongs = loadArtistSongs;
+    window.loadPlaylistSongs = loadPlaylistSongs;
 
-    // Initial load
-    fetchSongs();
+    // Additional utility functions
+    function showLibrary() {
+      // Switch to a library view showing liked songs and recent songs
+      appState.songs = [...appState.likedSongs];
+      switchView('songs');
+      elements.playlistTitle.textContent = 'Your Library';
+      displaySongs();
+    }
+
+    // Global search function for comprehensive search
+    async function globalSearch(query) {
+      if (!query.trim()) return;
+      
+      try {
+        const response = await fetch(`${BASE_API_URL}/search?query=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Update all content types with search results
+          if (data.data.songs && data.data.songs.results) {
+            appState.songs = data.data.songs.results.filter(song => 
+              song.language && song.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            );
+          }
+          
+          if (data.data.albums && data.data.albums.results) {
+            appState.albums = data.data.albums.results.filter(album => 
+              album.language && album.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            );
+          }
+          
+          if (data.data.artists && data.data.artists.results) {
+            appState.artists = data.data.artists.results;
+          }
+          
+          if (data.data.playlists && data.data.playlists.results) {
+            appState.playlists = data.data.playlists.results.filter(playlist => 
+              playlist.language && playlist.language.toLowerCase() === appState.currentLanguage.toLowerCase()
+            );
+          }
+          
+          // Display results based on current view
+          switch (appState.currentView) {
+            case 'songs':
+              displaySongs();
+              break;
+            case 'albums':
+              displayAlbums();
+              break;
+            case 'artists':
+              displayArtists();
+              break;
+            case 'playlists':
+              displayPlaylists();
+              break;
+          }
+        }
+      } catch (error) {
+        console.error('Error in global search:', error);
+      }
+    }
+
+    // Enhanced search with debouncing and global search
+    function setupEnhancedSearch() {
+      let searchTimeout;
+      elements.searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        appState.searchQuery = this.value.trim();
+        
+        searchTimeout = setTimeout(() => {
+          if (appState.searchQuery) {
+            globalSearch(appState.searchQuery);
+          } else {
+            resetAndLoadContent();
+          }
+        }, 500);
+      });
+    }
+
+    // Quality of life improvements
+    function setupKeyboardShortcuts() {
+      document.addEventListener('keydown', function(e) {
+        // Prevent shortcuts when typing in search
+        if (e.target === elements.searchInput) return;
+        
+        switch(e.code) {
+          case 'Space':
+            e.preventDefault();
+            togglePlay();
+            break;
+          case 'ArrowRight':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              nextSong();
+            }
+            break;
+          case 'ArrowLeft':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              prevSong();
+            }
+            break;
+          case 'ArrowUp':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              appState.volume = Math.min(1, appState.volume + 0.1);
+              setVolumeFromValue(appState.volume);
+            }
+            break;
+          case 'ArrowDown':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              appState.volume = Math.max(0, appState.volume - 0.1);
+              setVolumeFromValue(appState.volume);
+            }
+            break;
+          case 'KeyL':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              toggleLike();
+            }
+            break;
+          case 'KeyS':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              toggleShuffle();
+            }
+            break;
+          case 'KeyR':
+            if (e.ctrlKey || e.metaKey) {
+              e.preventDefault();
+              toggleRepeat();
+            }
+            break;
+        }
+      });
+    }
+
+    function setVolumeFromValue(volume) {
+      appState.volume = volume;
+      elements.volumeFilled.style.width = (appState.volume * 100) + '%';
+      
+      if (appState.audio) {
+        appState.audio.volume = appState.isMuted ? 0 : appState.volume;
+      }
+      
+      saveToLocalStorage(STORAGE_KEYS.VOLUME, appState.volume);
+    }
+
+    // Auto-save functionality
+    function setupAutoSave() {
+      setInterval(() => {
+        // Save current state periodically
+        saveToLocalStorage(STORAGE_KEYS.RECENT_SONGS, appState.recentSongs);
+        saveToLocalStorage(STORAGE_KEYS.LIKED_SONGS, appState.likedSongs);
+        
+        if (appState.songs[appState.currentIdx]) {
+          saveToLocalStorage(STORAGE_KEYS.LAST_PLAYED, appState.songs[appState.currentIdx]);
+        }
+      }, 30000); // Save every 30 seconds
+    }
+
+    // Enhanced initialization
+    function initializeEnhancedApp() {
+      initializeApp();
+      setupEnhancedSearch();
+      setupKeyboardShortcuts();
+      setupAutoSave();
+      
+      // Load initial content with better error handling
+      loadContent().catch(error => {
+        console.error('Failed to load initial content:', error);
+        // Fallback to basic loading
+        loadSongs();
+      });
+    }
+
+    // Replace the original initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeEnhancedApp();
+    });
+
+    // Advanced queue management
+    function addToQueue(song) {
+      appState.queue.push(song);
+      // Optional: Show queue UI or notification
+    }
+
+    function clearQueue() {
+      appState.queue = [];
+    }
+
+    function playFromQueue() {
+      if (appState.queue.length > 0) {
+        const nextSong = appState.queue.shift();
+        const songIndex = appState.songs.findIndex(s => s.id === nextSong.id);
+        if (songIndex !== -1) {
+          playSong(songIndex);
+        }
+      }
+    }
+
+    // Crossfade functionality (if supported)
+    function setupCrossfade() {
+      if (appState.audio && appState.audio.crossOrigin !== undefined) {
+        // Enable crossfade if supported by browser and audio source
+        appState.crossfadeEnabled = true;
+      }
+    }
+
+    // Analytics and usage tracking (privacy-friendly)
+    function trackUsage(event, data = {}) {
+      // Store usage patterns locally for better recommendations
+      const usage = JSON.parse(localStorage.getItem('music_usage') || '[]');
+      usage.push({
+        event,
+        data,
+        timestamp: Date.now(),
+        language: appState.currentLanguage
+      });
+      
+      // Keep only last 1000 events
+      const recentUsage = usage.slice(-1000);
+      localStorage.setItem('music_usage', JSON.stringify(recentUsage));
+    }
+
+    // Enhanced song recommendations based on usage
+    function getPersonalizedRecommendations() {
+      const usage = JSON.parse(localStorage.getItem('music_usage') || '[]');
+      const recentSongs = usage
+        .filter(u => u.event === 'song_played')
+        .slice(-50)
+        .map(u => u.data.songId);
+      
+      // Use this data to influence song suggestions
+      return recentSongs;
+    }
+
+    // Offline support indicators
+    function updateOfflineStatus() {
+      const isOnline = navigator.onLine;
+      document.body.classList.toggle('offline', !isOnline);
+      
+      if (!isOnline) {
+        // Show offline indicator
+        console.log('App is offline - some features may be limited');
+      }
+    }
+
+    window.addEventListener('online', updateOfflineStatus);
+    window.addEventListener('offline', updateOfflineStatus);
+
+    // Export functions for external use
+    window.musicApp = {
+      switchView,
+      playSong,
+      addToQueue,
+      clearQueue,
+      getState: () => appState,
+      loadContent,
+      globalSearch
+    };
   </script>
 </body>
 </html>
