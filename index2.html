@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tamil Music - YouTube Style</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+  font-family: 'Roboto', 'Segoe UI', sans-serif; 
+  background: #0f0f0f;
+  color: #ffffff;
+  line-height: 1.4;
+}
+
+/* Header */
+.header {
+  background: #212121;
+  border-bottom: 1px solid #303030;
+  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background: #ff0000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  border: 1px solid #303030;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #121212;
+}
+
+.search-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+}
+
+.search-input::placeholder { color: #aaaaaa; }
+
+.search-btn {
+  padding: 12px 20px;
+  background: #303030;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid #404040;
+  transition: background 0.2s ease;
+}
+
+.search-btn:hover { background: #404040; }
+
+/* Main Content */
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  padding-bottom: 120px;
+}
+
+.section-title {
+  font-size: 24px;
+  font-weight: 400;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+/* Music Grid */
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.song-card {
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.song-card:hover { transform: scale(1.02); }
+
+.song-image-container {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #303030;
+}
+
+.song-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.2s ease;
+}
+
+.play-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.song-card:hover .play-overlay { opacity: 1; }
+
+.play-overlay-btn {
+  width: 48px;
+  height: 48px;
+  background: #ffffff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  color: #000000;
+  transition: transform 0.1s ease;
+}
+
+.play-overlay-btn:hover { transform: scale(1.1); }
+
+.song-info {
+  padding: 12px 4px;
+}
+
+.song-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
+.song-artist {
+  font-size: 12px;
+  color: #aaaaaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Player Bar */
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #212121;
+  border-top: 1px solid #303030;
+  padding: 8px 16px;
+  z-index: 1000;
+}
+
+.player-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Player Info */
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.player-thumbnail {
+  width: 56px;
+  height: 56px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #303030;
+}
+
+.player-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.player-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
+.player-artist {
+  font-size: 12px;
+  color: #aaaaaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Player Controls */
+.player-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.1s ease;
+}
+
+.control-btn:hover { 
+  background: rgba(255,255,255,0.1); 
+  transform: scale(1.1);
+}
+
+.control-btn.active { color: #ff0000; }
+
+.play-pause-btn {
+  width: 40px;
+  height: 40px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 20px;
+  margin: 0 8px;
+}
+
+.play-pause-btn:hover { 
+  background: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Progress Bar */
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.time-label {
+  font-size: 11px;
+  color: #aaaaaa;
+  min-width: 35px;
+  text-align: center;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 4px;
+  background: #404040;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.progress-bar {
+  height: 100%;
+  background: #ffffff;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.1s ease;
+}
+
+.progress-bar-container:hover .progress-bar {
+  background: #ff0000;
+}
+
+/* Volume and Options */
+.player-options {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.volume-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume-slider {
+  width: 80px;
+  height: 4px;
+  background: #404040;
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+
+.option-btn {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #aaaaaa;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.1s ease;
+}
+
+.option-btn:hover { 
+  background: rgba(255,255,255,0.1); 
+  color: #ffffff;
+}
+
+.option-btn.active { color: #ff0000; }
+
+/* Queue Panel */
+.queue-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100vh;
+  background: #212121;
+  border-left: 1px solid #303030;
+  transition: right 0.3s ease;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+}
+
+.queue-panel.active { right: 0; }
+
+.queue-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #303030;
+  font-size: 18px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.close-queue {
+  background: none;
+  border: none;
+  color: #aaaaaa;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.close-queue:hover { 
+  background: rgba(255,255,255,0.1); 
+  color: #ffffff;
+}
+
+.queue-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.queue-item:hover { background: rgba(255,255,255,0.1); }
+
+.queue-item.playing { 
+  background: rgba(255,0,0,0.1);
+  border-left: 3px solid #ff0000;
+}
+
+.queue-thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+  background: #303030;
+  flex-shrink: 0;
+}
+
+.queue-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.queue-title {
+  font-size: 14px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+}
+
+.queue-artist {
+  font-size: 12px;
+  color: #aaaaaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #aaaaaa;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #303030;
+  border-top: 2px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Icons */
+.icon { font-family: 'Material Icons'; font-size: inherit; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content { padding: 0 16px; }
+  .search-container { display: none; }
+  .main-content { padding: 16px; }
+  .music-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  
+  .player-content {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .player-info { order: 1; }
+  .player-controls { order: 2; }
+  .player-options { order: 3; justify-content: center; }
+  
+  .queue-panel { width: 100%; right: -100%; }
+  .volume-container { display: none; }
+}
+
+@media (max-width: 480px) {
+  .control-buttons { gap: 4px; }
+  .control-btn { width: 28px; height: 28px; font-size: 16px; }
+  .play-pause-btn { width: 36px; height: 36px; font-size: 18px; }
+}
+</style>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon"><i class="icon">music_note</i></div>
+        <span>Tamil Music</span>
+      </div>
+      
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" class="search-input" placeholder="Search songs, artists, or albums" id="searchInput">
+          <button class="search-btn" id="searchBtn">
+            <i class="icon">search</i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <h2 class="section-title" id="sectionTitle">Tamil Hits</h2>
+    <div class="music-grid" id="musicGrid"></div>
+    
+    <div class="loading" id="loading" style="display:none;">
+      <div class="loading-spinner"></div>
+      <div>Loading music...</div>
+    </div>
+  </div>
+
+  <!-- Player Bar -->
+  <div class="player-bar">
+    <div class="player-content">
+      <!-- Song Info -->
+      <div class="player-info">
+        <img class="player-thumbnail" id="playerThumbnail" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNTYiIHZpZXdCb3g9IjAgMCA1NiA1NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNCIgZmlsbD0iIzMwMzAzMCIvPgo8cGF0aCBkPSJNMjggMTRWNDJMMzggMjhMMjggMTRaIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPg==" alt="Now Playing">
+        <div class="player-text">
+          <div class="player-title" id="playerTitle">Choose a song</div>
+          <div class="player-artist" id="playerArtist">No artist</div>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="player-controls">
+        <div class="control-buttons">
+          <button class="control-btn" id="shuffleBtn" title="Shuffle">
+            <i class="icon">shuffle</i>
+          </button>
+          <button class="control-btn" id="prevBtn" title="Previous">
+            <i class="icon">skip_previous</i>
+          </button>
+          <button class="control-btn play-pause-btn" id="playBtn" title="Play">
+            <i class="icon">play_arrow</i>
+          </button>
+          <button class="control-btn" id="nextBtn" title="Next">
+            <i class="icon">skip_next</i>
+          </button>
+          <button class="control-btn" id="repeatBtn" title="Repeat">
+            <i class="icon">repeat</i>
+          </button>
+        </div>
+        
+        <div class="progress-container">
+          <div class="time-label" id="currentTime">0:00</div>
+          <div class="progress-bar-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="time-label" id="totalTime">0:00</div>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="player-options">
+        <div class="volume-container">
+          <button class="option-btn" title="Mute">
+            <i class="icon">volume_up</i>
+          </button>
+          <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.7">
+        </div>
+        
+        <button class="option-btn" id="queueBtn" title="Queue">
+          <i class="icon">queue_music</i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Queue Panel -->
+  <div class="queue-panel" id="queuePanel">
+    <div class="queue-header">
+      <span>Queue</span>
+      <button class="close-queue" id="closeQueue">
+        <i class="icon">close</i>
+      </button>
+    </div>
+    <div class="queue-list" id="queueList"></div>
+  </div>
+
+<script>
+class YouTubeMusicPlayer {
+  constructor() {
+    this.apiBase = "https://jiosavan-api-with-playlist.vercel.app/api/search/songs";
+    this.audio = new Audio();
+    this.queue = [];
+    this.currentIndex = -1;
+    this.isPlaying = false;
+    this.shuffle = false;
+    this.repeat = false;
+    this.queryPool = [
+      // Genres & Styles
+      "Tamil Pop","Tamil Rock","Tamil Indie","Tamil Jazz","Tamil Hip Hop",
+      "Tamil Rap","Tamil Retro","Tamil Classical Fusion","Tamil Folk","Tamil EDM",
+      "Tamil Chill","Tamil Acoustic","Tamil Instrumental","Tamil Lounge","Tamil Lo-fi",
+      "Tamil Trap","Tamil Funk","Tamil Soul","Tamil Blues","Tamil Reggae",
+
+      // Moods & Themes
+      "Tamil Romantic","Tamil Love Songs","Tamil Heartbreak","Tamil Sad Songs","Tamil Happy Songs",
+      "Tamil Party","Tamil Dance","Tamil Energetic","Tamil Chill Vibes","Tamil Motivational",
+      "Tamil Celebration","Tamil Road Trip","Tamil Summer","Tamil Rainy Day","Tamil Night Songs",
+      "Tamil Morning Songs","Tamil Cozy","Tamil Intense","Tamil Emotional","Tamil Uplifting",
+
+      // Era / Period
+      "Tamil 90s Hits","Tamil 2000s Hits","Tamil 2010s Hits","Tamil 80s Hits","Tamil Retro Classics",
+      "Tamil Evergreen Hits","Tamil Golden Era","Tamil Modern Hits","Tamil Contemporary","Tamil Top Charts",
+
+      // Vocal / Artists Focus
+      "Tamil Female Vocal","Tamil Male Vocal","Tamil Duets","Tamil Instrumental","Tamil Acoustic Covers",
+      "Tamil Live Performances","Tamil Remix Songs","Tamil Mashup Songs","Tamil Indie Artists","Tamil Legendary Singers",
+
+      // Film / Media Based
+      "Tamil Movie Hits","Tamil Album Songs","Tamil OST","Tamil TV Songs","Tamil Short Film Songs",
+      "Tamil Music Videos","Tamil Viral Songs","Tamil Trending Songs","Tamil Soundtracks","Tamil Background Scores",
+
+      // Dance & Fitness
+      "Tamil Workout Songs","Tamil Gym Songs","Tamil Dance Party","Tamil Cardio","Tamil Zumba",
+      "Tamil Yoga Music","Tamil Running Songs","Tamil Hip Hop Dance","Tamil Club Songs","Tamil EDM Dance",
+
+      // Nature & Setting
+      "Tamil Beach Vibes","Tamil Road Trip Songs","Tamil Chill Night","Tamil City Life","Tamil Rainy Day Songs",
+      "Tamil Sunset Songs","Tamil Morning Wakeup","Tamil Cozy Home","Tamil Travel Songs","Tamil Night Drive",
+
+      // Misc / Fun
+      "Tamil Guitar Songs","Tamil Piano Songs","Tamil Violin Songs","Tamil Festival Party",
+      "Tamil Mood Booster","Tamil Sad Love","Tamil Emotional Love","Tamil Breakup Songs","Tamil Friendship Songs","Tamil Study Music"
+    ];
+    this.currentQuery = this.queryPool[0];
+    this.page = 0;
+    this.isLoading = false;
+
+    this.initializeElements();
+    this.setupEventListeners();
+    this.setupAudio();
+    this.loadInitialSongs();
+  }
+
+  initializeElements() {
+    this.elements = {
+      musicGrid: document.getElementById('musicGrid'),
+      loading: document.getElementById('loading'),
+      searchInput: document.getElementById('searchInput'),
+      searchBtn: document.getElementById('searchBtn'),
+      sectionTitle: document.getElementById('sectionTitle'),
+      playerThumbnail: document.getElementById('playerThumbnail'),
+      playerTitle: document.getElementById('playerTitle'),
+      playerArtist: document.getElementById('playerArtist'),
+      playBtn: document.getElementById('playBtn'),
+      prevBtn: document.getElementById('prevBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      shuffleBtn: document.getElementById('shuffleBtn'),
+      repeatBtn: document.getElementById('repeatBtn'),
+      queueBtn: document.getElementById('queueBtn'),
+      progressContainer: document.getElementById('progressContainer'),
+      progressBar: document.getElementById('progressBar'),
+      currentTime: document.getElementById('currentTime'),
+      totalTime: document.getElementById('totalTime'),
+      volumeSlider: document.getElementById('volumeSlider'),
+      queuePanel: document.getElementById('queuePanel'),
+      queueList: document.getElementById('queueList'),
+      closeQueue: document.getElementById('closeQueue')
+    };
+  }
+
+  setupEventListeners() {
+    this.elements.searchBtn.addEventListener('click', () => this.search());
+    this.elements.searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') this.search();
+    });
+
+    this.elements.playBtn.addEventListener('click', () => this.togglePlay());
+    this.elements.prevBtn.addEventListener('click', () => this.previousSong());
+    this.elements.nextBtn.addEventListener('click', () => this.nextSong());
+    this.elements.shuffleBtn.addEventListener('click', () => this.toggleShuffle());
+    this.elements.repeatBtn.addEventListener('click', () => this.toggleRepeat());
+
+    this.elements.queueBtn.addEventListener('click', () => this.toggleQueue());
+    this.elements.closeQueue.addEventListener('click', () => this.closeQueue());
+
+    this.elements.progressContainer.addEventListener('click', (e) => this.seek(e));
+    this.elements.volumeSlider.addEventListener('input', (e) => this.setVolume(e));
+
+    window.addEventListener('scroll', () => this.handleScroll());
+  }
+
+  setupAudio() {
+    this.audio.volume = 0.7;
+    this.audio.addEventListener('timeupdate', () => this.updateProgress());
+    this.audio.addEventListener('ended', () => this.nextSong());
+    this.audio.addEventListener('loadstart', () => this.showLoading());
+    this.audio.addEventListener('canplay', () => this.hideLoading());
+  }
+
+  async loadSongs(reset = false) {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    this.showLoading();
+
+    try {
+      const response = await fetch(`${this.apiBase}?query=${encodeURIComponent(this.currentQuery)}&page=${this.page}&limit=20`);
+      const data = await response.json();
+
+      if (reset) {
+        this.elements.musicGrid.innerHTML = '';
+        this.queue = [];
+        this.currentIndex = -1;
+      }
+
+      if (data.success && data.data.results) {
+        data.data.results.forEach(song => this.addSongToGrid(song));
+        this.updateQueue();
+      }
+    } catch (error) {
+      console.error('Error loading songs:', error);
+    } finally {
+      this.isLoading = false;
+      this.hideLoading();
+    }
+  }
+
+  addSongToGrid(song) {
+    const songData = {
+      name: song.name || 'Unknown Song',
+      artist: song.artists?.primary?.map(a => a.name).join(', ') || 'Unknown Artist',
+      image: song.image?.[song.image.length - 1]?.url || this.getDefaultImage(),
+      audio: song.downloadUrl?.[song.downloadUrl.length - 1]?.url || ''
+    };
+
+    if (!songData.audio) return;
+    this.queue.push(songData);
+
+    const songCard = document.createElement('div');
+    songCard.className = 'song-card';
+    songCard.innerHTML = `
+      <div class="song-image-container">
+        <img class="song-image" src="${songData.image}" alt="${songData.name}" loading="lazy">
+        <div class="play-overlay">
+          <button class="play-overlay-btn">
+            <i class="icon">play_arrow</i>
+          </button>
+        </div>
+      </div>
+      <div class="song-info">
+        <div class="song-title">${songData.name}</div>
+        <div class="song-artist">${songData.artist}</div>
+      </div>
+    `;
+
+    songCard.addEventListener('click', () => {
+      this.currentIndex = this.queue.indexOf(songData);
+      this.playSong();
+    });
+
+    this.elements.musicGrid.appendChild(songCard);
+  }
+
+  playSong() {
+    if (this.currentIndex < 0 || this.currentIndex >= this.queue.length) return;
+    const song = this.queue[this.currentIndex];
+    this.elements.playerThumbnail.src = song.image;
+    this.elements.playerTitle.textContent = song.name;
+    this.elements.playerArtist.textContent = song.artist;
+    this.audio.src = song.audio;
+    this.audio.play();
+    this.isPlaying = true;
+    this.updatePlayButton();
+    this.updateQueue();
+  }
+
+  togglePlay() {
+    if (this.currentIndex === -1 && this.queue.length > 0) {
+      this.currentIndex = 0;
+      this.playSong();
+      return;
+    }
+    this.isPlaying ? this.audio.pause() : this.audio.play();
+    this.isPlaying = !this.isPlaying;
+    this.updatePlayButton();
+  }
+
+  nextSong() {
+    if (this.queue.length === 0) return;
+    this.currentIndex = this.shuffle
+      ? Math.floor(Math.random() * this.queue.length)
+      : this.currentIndex + 1;
+
+    if (this.currentIndex >= this.queue.length) {
+      if (this.repeat) {
+        this.currentIndex = 0;
+      } else {
+        this.page++;
+        // Pick a random query from the pool for the next scroll
+        this.currentQuery = this.queryPool[Math.floor(Math.random() * this.queryPool.length)];
+        this.loadSongs();
+        this.currentIndex = this.queue.length - 1;
+      }
+    }
+    this.playSong();
+  }
+
+  previousSong() {
+    if (this.queue.length === 0) return;
+    this.currentIndex--;
+    if (this.currentIndex < 0) this.currentIndex = this.repeat ? this.queue.length - 1 : 0;
+    this.playSong();
+  }
+
+  toggleShuffle() {
+    this.shuffle = !this.shuffle;
+    this.elements.shuffleBtn.classList.toggle('active', this.shuffle);
+  }
+
+  toggleRepeat() {
+    this.repeat = !this.repeat;
+    this.elements.repeatBtn.classList.toggle('active', this.repeat);
+  }
+
+  toggleQueue() {
+    this.elements.queuePanel.classList.add('active');
+    this.elements.queueBtn.classList.add('active');
+  }
+
+  closeQueue() {
+    this.elements.queuePanel.classList.remove('active');
+    this.elements.queueBtn.classList.remove('active');
+  }
+
+  search() {
+    const query = this.elements.searchInput.value.trim();
+    if (!query) return;
+    this.currentQuery = query;
+    this.elements.sectionTitle.textContent = `Search results for "${query}"`;
+    this.page = 0;
+    this.loadSongs(true);
+  }
+
+  updateProgress() {
+    if (this.audio.duration) {
+      const progress = (this.audio.currentTime / this.audio.duration) * 100;
+      this.elements.progressBar.style.width = `${progress}%`;
+      this.elements.currentTime.textContent = this.formatTime(this.audio.currentTime);
+      this.elements.totalTime.textContent = this.formatTime(this.audio.duration);
+    }
+  }
+
+  seek(e) {
+    if (this.audio.duration) {
+      const rect = this.elements.progressContainer.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      this.audio.currentTime = pos * this.audio.duration;
+    }
+  }
+
+  setVolume(e) {
+    this.audio.volume = e.target.value;
+  }
+
+  updatePlayButton() {
+    const icon = this.elements.playBtn.querySelector('i');
+    icon.textContent = this.isPlaying ? 'pause' : 'play_arrow';
+  }
+
+  updateQueue() {
+    this.elements.queueList.innerHTML = '';
+    this.queue.forEach((song, index) => {
+      const queueItem = document.createElement('div');
+      queueItem.className = `queue-item ${index === this.currentIndex ? 'playing' : ''}`;
+      queueItem.innerHTML = `
+        <img class="queue-thumbnail" src="${song.image}" alt="${song.name}">
+        <div class="queue-info">
+          <div class="queue-title">${song.name}</div>
+          <div class="queue-artist">${song.artist}</div>
+        </div>
+      `;
+      queueItem.addEventListener('click', () => {
+        this.currentIndex = index;
+        this.playSong();
+      });
+      this.elements.queueList.appendChild(queueItem);
+    });
+  }
+
+  formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  handleScroll() {
+    if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 1000)) {
+      this.page++;
+      // Pick a random query on scroll
+      this.currentQuery = this.queryPool[Math.floor(Math.random() * this.queryPool.length)];
+      this.loadSongs();
+    }
+  }
+
+  showLoading() { this.elements.loading.style.display = 'block'; }
+  hideLoading() { this.elements.loading.style.display = 'none'; }
+  getDefaultImage() {
+    return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjMzAzMDMwIi8+CjxwYXRoIGQ9Ik0xMDAgNjBMMTQwIDEwMEwxMDAgMTQwTDYwIDEwMEwxMDAgNjBaIiBmaWxsPSIjNjY2NjY2Ii8+Cjwvc3ZnPg==";
+  }
+
+  async loadInitialSongs() { await this.loadSongs(true); }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  new YouTubeMusicPlayer();
+});
+</script>
+
+</body>
+</html>
